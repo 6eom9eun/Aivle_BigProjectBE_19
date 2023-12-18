@@ -9,7 +9,7 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
 
     # 기본 필드
-    username = models.CharField(max_length=150, unique=True)
+    user_id = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)
     last_login = models.DateTimeField(null=True, blank=True)
     last_name = models.CharField(max_length=150)

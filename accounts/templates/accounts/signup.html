@@ -3,6 +3,6 @@
   <form method="post" action="{% url 'signup' %}">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Sign Up</button>
+    <button type="submit">회원가입</button>
   </form>
 {% endblock %}
