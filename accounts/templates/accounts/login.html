@@ -1,0 +1,9 @@
+{% block content %}
+  <h2>Login</h2>
+  <form method="post" class="form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+  </form>
+  <p>회원가입<a href="{% url 'signup' %}">Sign up</a></p>
+{% endblock %}
