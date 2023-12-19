@@ -1,16 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-
-class Post(models.Model): # 게시판 글쓰기
-    """
-        post_id : 글 번호
-        user : 작성자
-        title: 제목
-        content: 내용
-        created_at: 작성일
-        published_at: 배포일(수정일)
-    """
+"""
+    post_id : 글 번호
+    user : 작성자
+    title: 제목
+    content: 내용
+    created_at: 작성일
+    published_at: 배포일(수정일)
+"""
+class Post(models.Model):
     post_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)

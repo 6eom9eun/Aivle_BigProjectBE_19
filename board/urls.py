@@ -1,7 +1,17 @@
-from django.urls import path
+from django.urls import path, include
 
 from . import views
 from .views import PostViewSet
+
+"""
+    from rest_framework import routers
+    router = routers.SimpleRouter()
+
+    from .views import PostViewSet
+
+    router.register('posts', PostViewSet)
+    
+"""
 
 # Post 목록 보여주기
 post_list = PostViewSet.as_view({
