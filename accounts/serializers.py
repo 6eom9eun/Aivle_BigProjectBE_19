@@ -47,8 +47,6 @@ class SignupSerializer(serializers.ModelSerializer):
         token = Token.objects.create(user=user)
         return user
     
-
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True) # write_only=True : 클라이언트 -> 서버 역직렬화 가능, 서버 -> 클라이언트 직렬화 X
