@@ -5,6 +5,7 @@ from .models import Post, Comment
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework import viewsets
 
 from django.shortcuts import get_object_or_404, get_list_or_404
 
@@ -16,10 +17,7 @@ from django.shortcuts import get_object_or_404, get_list_or_404
     created_at: 작성일
     published_at: 배포일
 """
-@api_view(['GET'])
-def post_list(request):
-    if request.method == 'GET':
-        # posts = post.objects.all()
-        posts = get_list_or_404(Post)
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+# Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
