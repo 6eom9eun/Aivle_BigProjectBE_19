@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h2>{{ title }}</h2>
+
+{% if board_list %}
+    <ul>
+        {% for data in board_list %}
+        <li>{{ data.no }} : {{ data.title }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <h2>no board list</h2>
+{% endif %}
+</body>
+</html>
