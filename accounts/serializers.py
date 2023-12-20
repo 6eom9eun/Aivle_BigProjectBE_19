@@ -11,6 +11,12 @@ from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
 # 회원가입 시리얼라이저
 class SignupSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(
+    required=True,
+    )
+    last_name = serializers.CharField(
+        required=True,
+    )
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
@@ -22,16 +28,16 @@ class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
-        validators=[validate_password], # 비밀번호에 대한 검증
+        validators=[validate_password],
     )
-    password2 = serializers.CharField( # 비밀번호 확인을 위한 필드
+    password2 = serializers.CharField(
         write_only=True,
         required=True,
     )
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
+        fields = ('first_name', 'last_name', 'email', 'username', 'password', 'password2', )
 
     def validate(self, data): # password과 password2의 일치 여부 확인
         if data['password'] != data['password2']:
@@ -44,6 +50,9 @@ class SignupSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
         )
 
         user.set_password(validated_data['password'])
@@ -58,11 +67,14 @@ class LoginSerializer(serializers.Serializer):
     
     def validate(self, data):
         user = authenticate(**data)
+        print(user.is_authenticated)
+        print(f"user: {user}")
         if user:
-            token = Token.objects.get(user=user) # 유저의 토큰을 불러오기
-            user.last_login = timezone.now() # 마지막 로그인 시간 저장
+            token = Token.objects.get(user=user)
+            print(f"token: {token.key}")
+            user.last_login = timezone.now()
             user.save()
             return token
-        raise serializers.ValidationError( # 가입된 유저 X
+        raise serializers.ValidationError(
             {"error": "제공된 자격 증명으로 로그인할 수 없습니다."}
         )

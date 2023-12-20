@@ -1,11 +1,11 @@
 from django.urls import is_valid_path
-from board.serializers import PostSerializer
-from .models import Post, Comment
-
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import viewsets
+from .serializers import PostSerializer
+from .models import Post, Comment
+from rest_framework.authentication import TokenAuthentication
 
 from django.shortcuts import get_object_or_404, get_list_or_404
 
@@ -21,6 +21,7 @@ from django.shortcuts import get_object_or_404, get_list_or_404
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    authentication_classes = [TokenAuthentication]  # 토큰을 사용한 인증 설정
 
 """
 from rest_framework import viewsets
