@@ -13,7 +13,11 @@ from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 class SignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())], # 이메일 검증
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
+    )
+    username = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")],
     )
     password = serializers.CharField(
         write_only=True,
