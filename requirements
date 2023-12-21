@@ -1,0 +1,17 @@
+mlflow
+opencv-python
+Pillow
+Django
+tensorflow-cpu
+django-filter
+django-cors-headers
+djangorestframework
+openai
+langchain
+pyMuPDF
+paddlepaddle
+paddleocr
+opencv-contrib-python
+requests
+gtts
+pydub
