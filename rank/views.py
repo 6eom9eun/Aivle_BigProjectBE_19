@@ -3,6 +3,6 @@ from .models import Ranking
 from .serializers import RankingSerializer
 
 class RankingListView(generics.ListAPIView):
-    queryset = Ranking.objects.order_by('-answers', 'user_level') # 푼 문제 수로 내림차순, 그 다음 사용자 레벨 오름차순
+    queryset = Ranking.objects.order_by('-user_level','created_dt')  # 사용자 레벨 내림차순, 먼저 맞춘 사람이 등수 위 
     serializer_class = RankingSerializer
     
