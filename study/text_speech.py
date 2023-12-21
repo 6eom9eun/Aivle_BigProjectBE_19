@@ -1,6 +1,15 @@
 from gtts import gTTS
 from openai import OpenAI
+from pathlib import Path
 import os
+import json
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+with open(BASE_DIR/'secrets.json') as f:
+    secrets = json.loads(f.read())
+
+os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 
 
 # 텍스트를 음성으로 변환
