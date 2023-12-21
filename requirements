@@ -8,9 +8,6 @@ django-cors-headers
 djangorestframework
 openai
 langchain
-pyMuPDF
-paddlepaddle
-paddleocr
 opencv-contrib-python
 requests
 gtts
