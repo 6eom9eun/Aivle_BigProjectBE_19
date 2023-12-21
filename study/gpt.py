@@ -9,8 +9,6 @@ from langchain.schema import BaseOutputParser, output_parser
 import openai
 import os
 import json
-import random
-import csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,9 +23,6 @@ class JsonOutputParser(BaseOutputParser):
         return json.loads(text)
 
 def make_sentence(word, meaning):
-    
-    word, meaning = get_random_word_and_meaning()
-    
     # Chatgpt 모델 불러오기
     llm = ChatOpenAI(
         temperature=0.1,
@@ -135,16 +130,3 @@ def make_sentence(word, meaning):
     return response
     
 
-def get_random_word_and_meaning():
-    # CSV 파일에서 단어와 뜻을 랜덤으로 선택
-    with open(BASE_DIR / 'words.csv', 'r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        rows = list(reader)
-
-    # 랜덤으로 한 행 선택
-    random_row = random.choice(rows)
-
-    word = random_row[0]  # 첫 번째 열 = 단어
-    meaning = random_row[1]  # 두 번째 열 = 단어의 뜻
-
-    return word, meaning
