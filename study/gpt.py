@@ -125,7 +125,7 @@ def make_sentence(word, meaning):
     # 최종 체인 생성
     chain = {"context": sentences_chain} | formatting_chain | output_parser
     
-    response=chain.invoke({"word":"개선","meaning":"어떤 것을 전보다 좋게 하거나 개량하는 것"})
+    response=chain.invoke({"word":word, "meaning":meaning})
     
     return response
     
