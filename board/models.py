@@ -10,8 +10,8 @@ from django.utils import timezone
     published_at: 배포일(수정일)
 """
 class Post(models.Model):
-    post_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post_id = models.AutoField(primary_key=True) # 기본키
+    user = models.ForeignKey(User, on_delete=models.CASCADE) # 외래키
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -23,13 +23,19 @@ class Post(models.Model):
         
 class Comment(models.Model): # 해당 글의 댓글 관리
     """
+        comment_id : 댓글 번호
+        user : 사용자
         reply: Reply -> Post 연결관계
         comment: 댓글내용
-        rep_date: 작성일
+        created_at: 작성일
     """
-    reply = models.ForeignKey(Post, on_delete=models.CASCADE)
+    comment_id = models.AutoField(primary_key=True) # 기본키
+    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
+    reply = models.ForeignKey(Post, null=False, blank=False, on_delete=models.CASCADE)
     comment = models.CharField(max_length=200)
-    rep_date = models.DateTimeField()
-
+    created_at = models.DateTimeField(auto_now_add=True)  # 작성일
+    
     def __str__(self):
         return self.comment
+    
+    # Foreign Key로는 user(댓글 쓴 사람)와 reply(게시글) 모델을 연결

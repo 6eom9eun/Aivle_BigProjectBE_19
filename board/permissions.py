@@ -10,6 +10,8 @@ class CustomReadOnly(permissions.BasePermission):
         return False
     
     # 각 객체별 권한
+    # SAFE_METHOD(GET, HEAD, OPTIONS)로 요청이 들어온 경우에는 method를 허용을 해주고,
+    # 그 외(PUT, PATCH, DELETE)에는 게시글의 user와 로그인된 user가 동일한 경우에만 권한을 허용
     def has_object_permission(self, request, view, obj):
         # 데이터에 영향을 미치지 않는 메소드 (GET 등)은 통과
         if request.method in permissions.SAFE_METHODS:
