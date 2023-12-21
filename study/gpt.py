@@ -9,26 +9,25 @@ from langchain.schema import BaseOutputParser, output_parser
 import openai
 import os
 import json
+import random
+import csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
 
 with open(BASE_DIR/'secrets.json') as f:
     secrets = json.loads(f.read())
 
-
-
 os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
-
 
 class JsonOutputParser(BaseOutputParser):
     def parse(self, text):
         text = text.replace("```", "").replace("json", "")
         return json.loads(text)
 
-# 문장 생성 모듈
 def make_sentence(word, meaning):
+    
+    word, meaning = get_random_word_and_meaning()
+    
     # Chatgpt 모델 불러오기
     llm = ChatOpenAI(
         temperature=0.1,
@@ -131,138 +130,21 @@ def make_sentence(word, meaning):
     # 최종 체인 생성
     chain = {"context": sentences_chain} | formatting_chain | output_parser
     
-    response=chain.invoke({"word":word,"meaning":meaning})
+    response=chain.invoke({"word":"개선","meaning":"어떤 것을 전보다 좋게 하거나 개량하는 것"})
     
     return response
     
 
-# 문제 생성 모듈
-def make_problem(word,meaning):
-    llm = ChatOpenAI(
-        temperature=0.1,
-        model="gpt-3.5-turbo-1106",
-        streaming=True,
-        callbacks=[StreamingStdOutCallbackHandler()],
-    )
-    
-    questions_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-                너는 문해력 문제를 출제하는 선생님이야.
+def get_random_word_and_meaning():
+    # CSV 파일에서 단어와 뜻을 랜덤으로 선택
+    with open(BASE_DIR / 'words.csv', 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
 
-                주어진 단어와 주어진 단어의 뜻에 기반하여 지문을 만들고,
-                지문에서 주어진 단어가 어떤 의미로 사용되었는지 물어볼거야.
+    # 랜덤으로 한 행 선택
+    random_row = random.choice(rows)
 
-                주어진 단어는 {word} 이고, 단어의 뜻은 {meaning}이야.
+    word = random_row[0]  # 첫 번째 열 = 단어
+    meaning = random_row[1]  # 두 번째 열 = 단어의 뜻
 
-                각 질문에는 4개의 답안이 있으며, 3개는 정답이 아니고, 1개만이 정답이야.
-                정답이 아닌 답안들은 정답과 유사하지 않아야 합니다.
-
-                (O)를 사용해서 정답을 표시해줘
-
-                예시문 :
-
-                Sentence: 아직도 사흘이 지나도 그 사람의 모습이 잊혀지지 않는다.
-                Question: 위 문장에서 '사흘'이 의미하는 바는 무엇인가요?
-                Answers: 1일|2일|3일(O)|4일
-
-                Sentence: 최근 학교에서는 학생들의 건강을 위해 급식 메뉴를 개선하고 있습니다.
-                Question: 위 문장에서 '개선'이 의미하는 바는 무엇인가요?
-                Answers: 유지|향상(O)|유연|윤리
-
-                너의 차례야!
-            """,
-        )
-    ])
-    
-    questions_chain = questions_prompt | llm
-    
-    formatting_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-        "system",
-        """
-            You are a powerful formatting algorithm.
-
-            You format exam questions  into JSON format.
-            Answers with (o) are the correct ones.
-
-            Example Input:
-
-            Sentence: 어릴 적부터 그의 꿈은 작곡가가 되는 것이었다.
-            Question: 위 문장에서 '작곡가'가 의미하는 바는 무엇인가요?
-            Answers: 음악을 연주하는 사람|음악을 쓰는 사람(O)|음악을 감상하는 사람|음악을 가르치는 사람
-
-            Sentence: 그 영화는 감동적인 이야기와 아름다운 비주얼로 관객들의 마음을 사로잡았다.
-            Question: 위 문장에서 '비주얼'이 의미하는 바는 무엇인가요?
-            Answers: 사운드|캐스팅|영상 효과|시각적인 요소를 포함한 영상(O)
-
-
-            Example Output:
-
-            ```json
-            {{ "questions": [
-                    {{
-                        "Sentence": "어릴 적부터 그의 꿈은 작곡가가 되는 것이었다.",
-                        "question": "위 문장에서 '작곡가'가 의미하는 바는 무엇인가요?",
-                        "answers": [
-                                {{
-                                    "answer": "음악을 연주하는 사람",
-                                    "correct": false
-                                }},
-                                {{
-                                    "answer": "음악을 쓰는 사람",
-                                    "correct": true
-                                }},
-                                {{
-                                    "answer": "음악을 감상하는 사람",
-                                    "correct": false
-                                }},
-                                {{
-                                    "answer": "음악을 가르치는 사람",
-                                    "correct": false
-                                }}
-                        ]
-                    }},
-                                {{
-                        "Sentence": "그 영화는 감동적인 이야기와 아름다운 비주얼로 관객들의 마음을 사로잡았다.",
-                        "question": "위 문장에서 '비주얼'이 의미하는 바는 무엇인가요?",
-                        "answers": [
-                                {{
-                                    "answer": "사운드",
-                                    "correct": false
-                                }},
-                                {{
-                                    "answer": "캐스팅",
-                                    "correct": false
-                                }},
-                                {{
-                                    "answer": "영상 효과",
-                                    "correct": false
-                                }},
-                                {{
-                                    "answer": "시각적인 요소를 포함한 영상",
-                                    "correct": true
-                                }}
-                        ]
-                    }},
-                ]
-            }}
-            ```
-            Your turn!
-
-            Questions: {context}
-
-        """,
-        )
-    ])
-    
-    formatting_chain = formatting_prompt | llm
-    
-    chain = {"context": questions_chain} | formatting_chain | output_parser
-    
-    response=chain.invoke({"word":word,"meaning":meaning})
-    
-    return response
+    return word, meaning
