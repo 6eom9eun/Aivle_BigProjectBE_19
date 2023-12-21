@@ -1,6 +1,3 @@
-import openai
-import os
-import json
 from pathlib import Path
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
@@ -9,22 +6,41 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.retrievers import WikipediaRetriever
 from langchain.schema import BaseOutputParser, output_parser
+import openai
+import os
+import json
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 
 with open(BASE_DIR/'secrets.json') as f:
     secrets = json.loads(f.read())
 
+
+
 os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 
-llm = ChatOpenAI(
-    temperature=0.1,
-    model="gpt-3.5-turbo-1106",
-    streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
-)
 
-sentence_prompt = ChatPromptTemplate.from_messages(
+class JsonOutputParser(BaseOutputParser):
+    def parse(self, text):
+        text = text.replace("```", "").replace("json", "")
+        return json.loads(text)
+
+def make_sentence(word, meaning):
+    # Chatgpt 모델 불러오기
+    llm = ChatOpenAI(
+        temperature=0.1,
+        model="gpt-3.5-turbo-1106",
+        streaming=True,
+        callbacks=[StreamingStdOutCallbackHandler()],
+    )    
+    
+    # JSON 파서 가져오기
+    output_parser = JsonOutputParser()
+    
+    # 문장을 만들어줄 프롬프트
+    sentence_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
@@ -54,5 +70,68 @@ sentence_prompt = ChatPromptTemplate.from_messages(
                 너의 차례야!
             """,
         )
-    ]
-)
+    ])
+    
+    # 만든 프롬프트를 LLM에 적용하기
+    sentences_chain = sentence_prompt | llm
+
+    # JSON 파일로 변환할 프롬프트
+    formatting_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+        "system",
+        """
+            You are a powerful formatting algorithm.
+
+            You format questions into JSON format.
+
+            You must follow this examples.
+
+            Example Input:
+
+	        우리는 항상 자기계발을 통해 지속적인 성장과 개선을 추구해야 합니다.
+	        회사 내 모든 직원들은 제품 품질의 개선과 고객 만족도 향상에 최선을 다해야 합니다.
+	        협력사와의 원활한 의사소통을 통해 생산 공정에 대한 개선 방안을 공유할 수 있을 것이다.
+
+            심심한 마음을 달래기 위해 책을 읽으며 시간을 보내고 있다.
+            나는 심심한 마음을 달래기 위해 우리 가족과 함께 영화를 보았다.
+	        그는 심심한 마음을 달래기 위해 사무실에서 일하다가도 가끔씩 창밖을 내다보곤 한다.
+
+
+            Example Output:
+
+            ```json
+            {{ "sentences": [
+                    {{ text: [
+                        "우리는 항상 자기계발을 통해 지속적인 성장과 개선을 추구해야 합니다.",
+                        "회사 내 모든 직원들은 제품 품질의 개선과 고객 만족도 향상에 최선을 다해야 합니다.",
+                        "협력사와의 원활한 의사소통을 통해 생산 공정에 대한 개선 방안을 공유할 수 있을 것이다."]
+                    }},
+                    {{
+                        text: [
+                            "심심한 마음을 달래기 위해 책을 읽으며 시간을 보내고 있다.",
+                            "나는 심심한 마음을 달래기 위해 우리 가족과 함께 영화를 보았다.",
+                            "그는 심심한 마음을 달래기 위해 사무실에서 일하다가도 가끔씩 창밖을 내다보곤 한다."
+                        ]
+                    }},
+                ]
+            }}
+            ```
+            Your turn!
+
+            Questions: {context}
+        """,
+        )
+    ])
+
+    # JSON 포멧으로 변환하는 모듈 생성
+    formatting_chain = formatting_prompt | llm
+
+    # 최종 체인 생성
+    chain = {"context": sentences_chain} | formatting_chain | output_parser
+    
+    response=chain.invoke({"word":"개선","meaning":"어떤 것을 전보다 좋게 하거나 개량하는 것"})
+    
+    return response
+    
+
