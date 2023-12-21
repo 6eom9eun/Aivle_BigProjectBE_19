@@ -16,7 +16,7 @@ class RandomQuizView(APIView):
             meaning = random_word_entry.meaning
 
             # 질문 생성
-            response = make_sentence(word, meaning)
+            response = make_problem(word, meaning)
 
             # 사용자에게 응답 반환
             return JsonResponse({"question_response": response}, status=status.HTTP_200_OK)

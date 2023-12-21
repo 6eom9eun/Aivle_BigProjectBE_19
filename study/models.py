@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Word(models.Model):
     word = models.CharField(max_length=255)
@@ -6,3 +7,9 @@ class Word(models.Model):
 
     def __str__(self):
         return f"{self.word} - {self.meaning}"
+
+
+class Audio(models.Model):
+    audio_id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE) 
+    audio = models.FileField(upload_to='audio/')
