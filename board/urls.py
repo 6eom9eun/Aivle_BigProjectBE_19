@@ -1,7 +1,17 @@
 from django.urls import path, include
 
 from . import views
-from .views import PostViewSet
+from .views import PostViewSet, CommentViewSet
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register('posts', PostViewSet, basename='post') # (게시글)
+router.register('comments', CommentViewSet, basename='comment') # (댓글)
+
+app_name = 'board'
+urlpatterns = [
+    path('', include(router.urls)),
+]
 
 """
     from rest_framework import routers
@@ -12,22 +22,3 @@ from .views import PostViewSet
     router.register('posts', PostViewSet)
     
 """
-
-# Post 목록 보여주기
-post_list = PostViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
-
-# Post detail 보여주기 + 수정 + 삭제
-post_detail = PostViewSet.as_view({
-    'get': 'retrieve',
-    'put': 'update',
-    'delete': 'destroy'
-})
-
-app_name = 'board'
-urlpatterns = [
-    path('', post_list),
-    path('<int:pk>/', post_detail),
-]
