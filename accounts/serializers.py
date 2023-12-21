@@ -37,7 +37,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'username', 'password', 'password2', )
+        fields = ('first_name', 'last_name', 'email', 'username', 'password', 'password2',)
 
     def validate(self, data): # password과 password2의 일치 여부 확인
         if data['password'] != data['password2']:
