@@ -1,9 +1,5 @@
 from django.db import models
 
-from rest_framework import serializers
-from .models import ChatPrompt
-
-class ChatPromptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChatPrompt
-        fields = ['word', 'meaning']
+class Word(models.Model):
+    word = models.CharField(max_length=255)
+    meaning = models.TextField()
