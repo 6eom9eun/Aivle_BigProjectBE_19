@@ -10,6 +10,8 @@ from django.contrib.auth.hashers import check_password
 
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
+from .models import *
+
 # 회원가입 시리얼라이저
 class SignupSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(
@@ -103,3 +105,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+# 프로필 시리얼라이저
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ("introduction","image")
