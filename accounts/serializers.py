@@ -30,20 +30,10 @@ class SignupSerializer(serializers.ModelSerializer):
         required=True,
         validators=[validate_password],
     )
-    password2 = serializers.CharField(
-        write_only=True,
-        required=True,
-    )
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'username', 'password', 'password2',)
-
-    def validate(self, data): # password과 password2의 일치 여부 확인
-        if data['password'] != data['password2']:
-            raise serializers.ValidationError(
-                {"password": "비밀번호 일치하지 않음."})
-        return data
+        fields = ('first_name', 'last_name', 'email', 'username', 'password',)
 
     def create(self, validated_data):
         # CREATE 요청에 대해 create 메서드를 오버라이딩, 유저를 생성하고 토큰도 생성하게 해준다.
