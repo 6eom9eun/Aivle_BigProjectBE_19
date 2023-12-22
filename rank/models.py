@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Ranking(models.Model):
     lv_id = models.AutoField(primary_key=True)
@@ -15,3 +17,11 @@ class Ranking(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - Level {self.user_level} {self.created_dt}"
+    
+@receiver(post_save, sender=User)
+def create_user_ranking(sender, instance, created, **kwargs):
+    if created:
+        Ranking.objects.get_or_create(user=instance)
+
+# Connect the signal
+post_save.connect(create_user_ranking, sender=User)
