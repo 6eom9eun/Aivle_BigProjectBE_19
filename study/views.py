@@ -5,7 +5,13 @@ from .models import Word
 from .gpt import *
 from django.http import JsonResponse
 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
 class RandomQuizView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
         # 데이터베이스에서 무작위 레코드 단어와 뜻을 가져옴
         random_word_entry = Word.objects.order_by('?').first()

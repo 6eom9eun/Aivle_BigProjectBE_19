@@ -27,19 +27,19 @@ class LoginView(generics.GenericAPIView):
 
 # 유저 정보 뷰
 class UserDetailView(APIView):
-    permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        serializer = UserDetailSerializer(user)
+        serializer = UserDetailSerializer(instance=user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 # 유저 정보 업데이트 뷰
 class UserUpdateView(UpdateAPIView):
     serializer_class = UserUpdateSerializer
-    permission_classes = [IsAuthenticated]
     authentication_classes = [TokenAuthentication] # 토큰 인증
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
