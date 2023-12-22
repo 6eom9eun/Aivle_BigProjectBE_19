@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token # Token 모델
 from rest_framework.validators import UniqueValidator # 이메일 중복 방지 검증
 
 from django.contrib.auth import authenticate # Django의 기본 authenticate 함수 -> 설정한 TokenAuth 방식으로 유저를 인증.
+from django.contrib.auth.hashers import check_password
 
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
@@ -71,19 +72,26 @@ class LoginSerializer(serializers.Serializer):
 
 # 유저 정보 수정, 작동 확인 해야함
 class UserUpdateSerializer(serializers.ModelSerializer):
+    old_password = serializers.CharField(write_only=True, required=False) # 이전 비밀번호 받아오기
+    
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password',)
+        fields = ('first_name', 'last_name', 'email', 'password', 'old_password',)
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
 
     def update(self, instance, validated_data):
+        old_password = validated_data.pop('old_password', None)
+
+        if old_password and not check_password(old_password, instance.password):
+            raise serializers.ValidationError({'old_password': '이전 비밀번호가 올바르지 않습니다.'})
+
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.email = validated_data.get('email', instance.email)
 
-        password = validated_data.get('password')
-        if password:
-            instance.set_password(password)
+        new_password = validated_data.get('password')
+        if new_password:
+            instance.set_password(new_password)
 
         instance.save()
         return instance
