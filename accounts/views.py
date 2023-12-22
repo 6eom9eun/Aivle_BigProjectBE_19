@@ -52,3 +52,17 @@ class UserUpdateView(UpdateAPIView):
         self.perform_update(serializer)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# 프로필 뷰
+class ProfileView(generics.RetrieveUpdateAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer 
+    
+    def get_object(self):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            obj = queryset.get(pk=self.request.user.pk)
+            self.check_object_permissions(self.request, obj)
+            return obj
+        except Profile.DoesNotExist:
+            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
