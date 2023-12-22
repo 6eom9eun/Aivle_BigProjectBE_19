@@ -11,13 +11,18 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
-    # comment_set = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
-    comments_count = serializers.IntegerField(source='comments.count', read_only=True)  # 게시글에 달린 댓글 갯수
     class Meta:
         model = Post
-        fields = ['post_id', 'user', 'title', 'content', 'created_at', 'comments', 'comments_count']
-        
+        fields = ['post_id', 'user', 'title', 'content', 'created_at']
+
+class PostDetailSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+    comments = CommentSerializer(many=True)
+
+    class Meta:
+        model = Post
+        fields = ['post_id', 'user', 'title', 'content', 'created_at', 'comments']
+ 
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
