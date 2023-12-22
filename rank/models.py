@@ -23,5 +23,4 @@ def create_user_ranking(sender, instance, created, **kwargs):
     if created:
         Ranking.objects.get_or_create(user=instance)
 
-# Connect the signal
 post_save.connect(create_user_ranking, sender=User)
