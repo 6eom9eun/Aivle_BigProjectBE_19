@@ -68,3 +68,22 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError(
             {"error": "제공된 자격 증명으로 로그인할 수 없습니다."}
         )
+
+# 유저 정보 수정, 작동 확인 해야함
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'password',)
+        extra_kwargs = {'password': {'write_only': True, 'required': False}}
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.email = validated_data.get('email', instance.email)
+
+        password = validated_data.get('password')
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
