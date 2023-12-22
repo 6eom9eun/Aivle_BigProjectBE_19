@@ -35,6 +35,29 @@ class UserDetailView(APIView):
         serializer = UserDetailSerializer(instance=user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
+
+    def get_object(self):
+        try:
+            queryset = Profile.objects.all()
+            obj = queryset.get(user=self.request.user)
+            self.check_object_permissions(self.request, obj)
+            return obj
+        except Profile.DoesNotExist:
+            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    def get(self, request, *args, **kwargs):
+        user_serializer = UserDetailSerializer(instance=request.user)
+        profile_serializer = self.get_serializer(self.get_object())
+
+        return Response({
+            'user': user_serializer.data,
+            'profile': profile_serializer.data,
+        }, status=status.HTTP_200_OK)
+        
 # 유저 정보 업데이트 뷰
 class UserUpdateView(UpdateAPIView):
     serializer_class = UserUpdateSerializer
@@ -52,17 +75,3 @@ class UserUpdateView(UpdateAPIView):
         self.perform_update(serializer)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-# 프로필 뷰
-class ProfileView(generics.RetrieveUpdateAPIView):
-    queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer 
-    
-    def get_object(self):
-        try:
-            queryset = self.filter_queryset(self.get_queryset())
-            obj = queryset.get(pk=self.request.user.pk)
-            self.check_object_permissions(self.request, obj)
-            return obj
-        except Profile.DoesNotExist:
-            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
