@@ -1,6 +1,6 @@
 # board > views.py
 from django.urls import is_valid_path
-from board.serializers import PostSerializer, PostCreateSerializer, CommentSerializer
+from board.serializers import PostSerializer, PostCreateSerializer, PostDetailSerializer, CommentSerializer
 from .permissions import CustomReadOnly
 from .models import Post, Comment
 
@@ -17,9 +17,14 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
     serializer_class = PostSerializer
     authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly] # 비인증 요청에 대해서는 읽기만 허용
+    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly] # 비인증 요청에 대해서는 읽기만 허용
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user', 'published_at']
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return PostSerializer
+        return PostDetailSerializer
     
     def perform_create(self, serializer):
         serializer.save(user = self.request.user)
@@ -28,8 +33,7 @@ class PostViewSet(viewsets.ModelViewSet):
 # (댓글) Comment 보여주기, 수정하기, 삭제하기 모두 가능
 class CommentViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
-    # queryset = Comment.objects.all().order_by('-created_at')
+    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
     serializer_class = CommentSerializer
     
     def get_queryset(self):
@@ -38,6 +42,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user, reply_id=self.kwargs.get("post_pk"))
+
 
 """
 from rest_framework import viewsets
