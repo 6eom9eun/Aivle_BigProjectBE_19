@@ -79,6 +79,12 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'username', 'user_level', 'last_login', 'date_joined')
+
+# 프로필 시리얼라이저
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ("introduction","image")
         
 # 유저 정보 수정, 작동 확인 해야함
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -106,8 +112,3 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-# 프로필 시리얼라이저
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = ("introduction","image")
