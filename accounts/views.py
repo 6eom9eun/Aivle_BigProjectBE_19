@@ -1,7 +1,11 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from rest_framework.views import APIView
+
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
 from rest_framework.generics import UpdateAPIView
 
 from .serializers import *
@@ -21,16 +25,28 @@ class LoginView(generics.GenericAPIView):
         token = serializer.validated_data # Token
         return Response({"token": token.key}, status=status.HTTP_200_OK)
 
+# 유저 정보 뷰
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserDetailSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 # 유저 정보 업데이트 뷰
 class UserUpdateView(UpdateAPIView):
     serializer_class = UserUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication] # 토큰 인증
 
     def get_object(self):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        instance = self.get_object()
+        instance = self.get_object() # 사용자 객체 가져오기, 유효성 검사
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)

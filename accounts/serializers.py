@@ -70,6 +70,12 @@ class LoginSerializer(serializers.Serializer):
             {"error": "제공된 자격 증명으로 로그인할 수 없습니다."}
         )
 
+# 유저 정보 시리얼라이저
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'username',)
+        
 # 유저 정보 수정, 작동 확인 해야함
 class UserUpdateSerializer(serializers.ModelSerializer):
     old_password = serializers.CharField(write_only=True, required=False) # 이전 비밀번호 받아오기
