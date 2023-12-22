@@ -2,7 +2,7 @@ mlflow
 opencv-python
 Pillow
 Django
-tensorflow-cpu
+tensorflow
 django-filter
 django-cors-headers
 djangorestframework
@@ -12,3 +12,4 @@ opencv-contrib-python
 requests
 gtts
 pydub
+Pillow

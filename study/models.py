@@ -7,7 +7,11 @@ class Word(models.Model):
 
     def __str__(self):
         return f"{self.word} - {self.meaning}"
-
+    
+class Quiz(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    word = models.ForeignKey(Word, on_delete=models.CASCADE)
+    solved_date = models.DateTimeField(auto_now_add=True)
 
 class Audio(models.Model):
     audio_id = models.AutoField(primary_key=True)
