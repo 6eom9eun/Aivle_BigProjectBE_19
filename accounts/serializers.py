@@ -22,11 +22,11 @@ class SignupSerializer(serializers.ModelSerializer):
     )
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")], # 모든 쿼리셋에 대해서 고유
     )
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")],
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")], # 모든 쿼리셋에 대해서 고유
     )
     password = serializers.CharField(
         write_only=True,
@@ -48,7 +48,7 @@ class SignupSerializer(serializers.ModelSerializer):
             last_name=validated_data['last_name'],
         )
 
-        user.set_password(validated_data['password'])
+        user.set_password(validated_data['password']) # 패스워드 해싱 -> 장고는 PBKDF2해싱
         user.save()
         token = Token.objects.create(user=user)
         return user
