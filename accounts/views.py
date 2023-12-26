@@ -40,10 +40,10 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             'user': user_serializer.data,
         }, status=status.HTTP_200_OK)
         
-# 유저 정보 업데이트 뷰
+# 유저 정보, 프로필 업데이트 뷰
 class UserUpdateView(UpdateAPIView):
     serializer_class = UserUpdateSerializer
-    authentication_classes = [TokenAuthentication] # 토큰 인증
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
@@ -51,10 +51,12 @@ class UserUpdateView(UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        instance = self.get_object() # 사용자 객체 가져오기, 유효성 검사
+        instance = self.get_object()  # 사용자 객체 가져오기, 유효성 검사
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+
+        # 사용자 정보와 프로필 정보 함께 업데이트
+        serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
