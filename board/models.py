@@ -16,6 +16,7 @@ class Post(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     published_at = models.DateTimeField(null=True, blank=True)
+    image = models.ImageField(upload_to='uploads/%Y/%m/%d/', blank=True, null=True)  # 사진 첨부
 
     def publish(self):
         self.published_at = timezone.now()
