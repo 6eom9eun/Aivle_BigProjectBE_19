@@ -11,6 +11,7 @@ class Word(models.Model):
 class Quiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
+    quiz = models.TextField(blank=True, null=False)
     solved_date = models.DateTimeField(null=True, blank=True)
     chat_log = models.TextField(blank=True, null=True)
 

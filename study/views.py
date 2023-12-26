@@ -25,7 +25,7 @@ class RandomQuizView(APIView):
             response = make_problem(word, meaning)
 
             # 사용자에게 응답 반환
-            quiz_instance = Quiz(user=request.user, word=random_word_entry)
+            quiz_instance = Quiz(user=request.user, word=random_word_entry, quiz=response)
             quiz_instance.save()
 
             return JsonResponse({"question_response": response}, status=status.HTTP_200_OK)
