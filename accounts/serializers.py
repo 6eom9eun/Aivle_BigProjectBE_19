@@ -90,16 +90,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 # 유저 정보 수정, 작동 확인 해야함
 class UserUpdateSerializer(serializers.ModelSerializer):
     old_password = serializers.CharField(write_only=True, required=False)
-    profile = ProfileSerializer()
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password', 'old_password', 'profile',)
+        fields = ('first_name', 'last_name', 'email', 'password', 'old_password',)
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
 
     def update(self, instance, validated_data):
         old_password = validated_data.pop('old_password', None)
-        profile_data = validated_data.pop('profile', {})
 
         if old_password and not check_password(old_password, instance.password):
             raise serializers.ValidationError({'old_password': '이전 비밀번호가 올바르지 않습니다.'})
@@ -114,10 +112,17 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
 
-        # 프로필 정보 업데이트
-        profile = instance.profile
-        profile.introduction = profile_data.get('introduction', profile.introduction)
-        profile.image = profile_data.get('image', profile.image)
-        profile.save()
+        return instance
+    
+# 프로필 수정 시리얼라이저 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('introduction', 'image',)
+
+    def update(self, instance, validated_data):
+        instance.introduction = validated_data.get('introduction', instance.introduction)
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
 
         return instance
