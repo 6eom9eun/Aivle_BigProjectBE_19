@@ -74,17 +74,17 @@ class LoginSerializer(serializers.Serializer):
 
 # 유저 정보 시리얼라이저
 class UserDetailSerializer(serializers.ModelSerializer):
-    user_level = serializers.IntegerField(source='ranking.user_level', read_only=True)
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'username', 'user_level', 'last_login', 'date_joined')
+        fields = ('first_name', 'last_name', 'email', 'username', 'last_login', 'date_joined')
 
 # 프로필 시리얼라이저
 class ProfileSerializer(serializers.ModelSerializer):
+    user_level = serializers.IntegerField(source='ranking.user_level', read_only=True)
     class Meta:
         model = Profile
-        fields = ("introduction","image")
+        fields = ('introduction','image','user_level',)
         
 # 유저 정보 수정, 작동 확인 해야함
 class UserUpdateSerializer(serializers.ModelSerializer):
