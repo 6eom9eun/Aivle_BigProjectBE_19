@@ -4,6 +4,7 @@ from rest_framework import status
 from .models import Word, Quiz
 from .gpt import *
 from .text_speech import *
+from .serializers import *
 from django.http import JsonResponse
 
 from rest_framework.permissions import IsAuthenticated
@@ -45,7 +46,15 @@ class RandomQuizView(APIView):
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
+class QuizListView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        quizzes = Quiz.objects.filter(user=request.user)
+        serializer = QuizSerializer(quizzes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
