@@ -1,4 +1,6 @@
 #노트북은 cpu를 써서 그런지 성능이 안좋게 나옴. gpu 사용 권장함.
+
+#----------------------------------추후 프론트나 백엔드 상황에 따라 경로나 이것 저것 수정 필요------------
 pip install --upgrade pip
 pip install paddlepaddle
 #pip install "paddleocr>=2.0.1" --upgrade PyMuPDF==1.21.1 # PyMuPDF 인식 불가 error 대비
