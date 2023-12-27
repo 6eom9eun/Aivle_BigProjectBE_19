@@ -14,3 +14,4 @@ gtts
 pydub
 Pillow
 torch
+ffmpeq
