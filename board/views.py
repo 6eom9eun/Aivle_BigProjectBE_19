@@ -33,15 +33,26 @@ class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'post_id'
     partial_update = True  # 부분 업데이트 허용 설정
         
-# (댓글) Comment 보여주기, 수정하기, 삭제하기 모두 가능
-class CommentViewSet(viewsets.ModelViewSet):
+# (댓글) Comment 목록 보여주기
+class CommentViewSet(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     serializer_class = CommentSerializer
+    lookup_url_kwarg = 'post_id'
     
     def get_queryset(self):
         post_pk = self.kwargs.get("post_id")
         return Comment.objects.filter(reply__post_id=post_pk).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user, reply_id=self.kwargs.get("post_id"))
+        post_pk = self.kwargs.get("post_id")
+        post = get_object_or_404(Post, pk=post_pk)
+        serializer.save(user=self.request.user, reply=post)
+        
+# (댓글) Comment 조회, 수정, 삭제     
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    serializer_class = CommentSerializer
+    lookup_url_kwarg = 'comment_id'
+    queryset = Comment.objects.all()
