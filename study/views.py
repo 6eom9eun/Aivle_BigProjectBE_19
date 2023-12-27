@@ -7,7 +7,7 @@ from .text_speech import *
 from .spell_correct import *
 from .serializers import *
 from django.http import JsonResponse
-import random
+from django.utils import timezone
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
@@ -53,6 +53,31 @@ class RandomQuizView(APIView):
             return JsonResponse(response, status=status.HTTP_200_OK)
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+    # 사용자 문제 풀기
+    # def post(self, request):
+    #     # 요청에서 데이터 가져오기
+    #     user_answer = request.data.get('user_answer')  # 사용자의 답변이 요청 데이터
+    #     # 요청 데이터 유효성 검사
+    #     if user_answer is None:
+    #         return JsonResponse({"error": "user_answer는 요청 데이터에 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # 사용자에 대한 퀴즈 인스턴스 가져오기
+    #     quiz_instance = Quiz.objects.filter(user=request.user, solved_date__isnull=True).first()
+
+    #     if quiz_instance:
+    #         # 사용자의 답변이 정답과 일치하는지 확인
+    #         if quiz_instance.answer == int(user_answer):
+    #             # 정답이 맞으면 solved_date를 현재 타임스탬프로 갱신
+    #             quiz_instance.solved_date = timezone.now()
+    #             quiz_instance.save()
+
+    #             return JsonResponse({"message": "정답입니다! 풀이 날짜가 갱신되었습니다."}, status=status.HTTP_200_OK)
+    #         else:
+    #             return JsonResponse({"message": "틀린 답변입니다. 다시 시도해보세요!"}, status=status.HTTP_400_BAD_REQUEST)
+    #     else:
+    #         return JsonResponse({"error": "사용자에 대한 활성화된 퀴즈가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
 
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -62,36 +87,6 @@ class QuizListView(APIView):
         quizzes = Quiz.objects.filter(user=request.user)
         serializer = QuizListSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-#######
-class SpellCorrect(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = self.request.user
-        quizzes = Quiz.objects.filter(user=user, solved_date__isnull=False).order_by('-quiz_id')[:5]
-
-        quiz_data = [{quiz} for quiz in quizzes]
-
-        return Response(quiz_data, status=status.HTTP_200_OK)
-
-    def post(self, request, *args, **kwargs):
-        sentence = request.data.get('sentence', '')
-        
-        if not sentence:
-            return Response({'error': '요청 데이터에 문장이 필요합니다.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = self.request.user
-        quizzes = Quiz.objects.filter(user=user, solved_date__isnull=False).order_by('-quiz_id')[:5]
-
-        words = [quiz.word.word_text for quiz in quizzes]
-
-        result = is_correct(sentence, words)
-        return Response(result, status=status.HTTP_200_OK)
-#########
-
 
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
