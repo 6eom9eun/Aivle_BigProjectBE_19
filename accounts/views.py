@@ -50,7 +50,7 @@ class UserUpdateView(UpdateAPIView):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False) # 부분적 업데이트 X => PUT
         instance = self.get_object()  # 사용자 객체 가져오기, 유효성 검사
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -71,7 +71,7 @@ class ProfileUpdateView(UpdateAPIView):
         return self.request.user.profile
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False) # 부분적 업데이트 X => PUT
         instance = self.get_object()  # 프로필 객체 가져오기, 유효성 검사
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
