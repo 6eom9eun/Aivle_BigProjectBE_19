@@ -1,0 +1,49 @@
+#노트북은 cpu를 써서 그런지 성능이 안좋게 나옴. gpu 사용 권장함.
+pip install --upgrade pip
+pip install paddlepaddle
+#pip install "paddleocr>=2.0.1" --upgrade PyMuPDF==1.21.1 # PyMuPDF 인식 불가 error 대비
+#pip uninstall -y numpy # numpyerror int 인식 불가 error 대비
+#pip install "Numpy==1.23.5" # numpy 이전 버젼 설치(최신 버젼에서는 paddleocr 인식 불가)
+
+import json
+from paddleocr import PaddleOCR
+
+ocr = PaddleOCR(lang="korean")
+
+img_path = "test.jpg"  # 이미지 입력
+result = ocr.ocr(img_path, cls=False)
+
+# 텍스트 결과 추출
+text_results = []
+for line in result:
+    paragraph = ""
+
+    for word_info in line:
+        try:
+            if isinstance(word_info, list) and len(word_info) == 4 and all(isinstance(point, list) and len(point) == 2 for point in word_info):
+                # word_info가 4개의 좌표로 이루어진 리스트인 경우
+                # 예: [[38.0, 20.0], [84.0, 23.0], [82.0, 60.0], [37.0, 57.0]]
+                # 여기서는 무시하고 넘어감
+                pass
+            elif isinstance(word_info, tuple) and len(word_info) == 2 and isinstance(word_info[0], str) and isinstance(word_info[1], (int, float)):
+                # word_info가 튜플인 경우
+                # 예: ('오늘', 0.9827002286911011)
+                word_text, _ = word_info
+                paragraph += word_text + " "
+            else:
+                print(f"Unexpected structure in word_info: {word_info}")
+        except (TypeError, ValueError) as e:
+            print(f"Error processing word_info: {e}")
+
+    if paragraph.strip():
+        text_results.append(paragraph.strip())
+
+# 출력 결과 JSON 형태로 저장
+output_json_path = "ocr_results.json"
+with open(output_json_path, "w", encoding="utf-8") as json_file:
+    json.dump(text_results, json_file, ensure_ascii=False, indent=4)
+
+# JSON에 저장된 값들을 띄어쓰기로 구분하여 출력
+print(" ".join(text_results))
+print(f"OCR results saved to: {output_json_path}")
+
