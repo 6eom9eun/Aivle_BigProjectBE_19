@@ -3,7 +3,7 @@ from rest_framework import permissions
 ## 게시글 ==> 조회는 누구나 가능 / 작성은 로그인한 유저만 / 수정, 삭제는 작성자만
 class IsOwnerOrReadOnly(permissions.BasePermission):
 
-    def has_object_permission(self, request, view, obj):
+    def has_object_permission(self, request, view, obj):        
         # 읽기 권한 요청이 들어오면 허용
         if request.method in permissions.SAFE_METHODS:
             return True
