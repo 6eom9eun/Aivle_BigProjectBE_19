@@ -19,7 +19,7 @@ class PostViewSet(generics.ListCreateAPIView):
     queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
     serializer_class = PostSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly] # 비인증 요청에 대해서는 읽기만 허용
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] # 비인증 요청에 대해서는 읽기만 허용
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user', 'published_at']
     
@@ -38,7 +38,7 @@ class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
 # (댓글) Comment 목록 보여주기
 class CommentViewSet(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     serializer_class = CommentSerializer
     lookup_url_kwarg = 'post_id'
     

@@ -11,7 +11,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
-    image = serializers.ImageField(use_url=True)
+    image = serializers.ImageField(use_url=True, required=False) # image는 옵션으로
     class Meta:
         model = Post
         fields = ['post_id', 'user', 'title', 'content', 'created_at', 'image']
@@ -28,4 +28,4 @@ class PostDetailSerializer(serializers.ModelSerializer):
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ("title", "content")
+        fields = ("title", "content", "image")
