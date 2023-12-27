@@ -25,13 +25,26 @@ class RandomQuizView(APIView):
             # 질문 생성
             response = make_problem(word, meaning)
 
-            # 사용자에게 응답 반환
-            quiz_instance = Quiz(user=request.user, word=random_word_entry, quiz=response)
+            # 정답 추출
+            idx = None
+            for index, answer in enumerate(response['questions'][0]['answers']):
+                if answer['correct']:
+                    idx = index
+                    break
+
+            # 사용자에게 응답 반환 및 정답 저장
+            quiz_instance = Quiz(
+                user=request.user,
+                word=random_word_entry,
+                quiz=response,
+                answer=idx
+            )
             quiz_instance.save()
 
             return JsonResponse({"question_response": response}, status=status.HTTP_200_OK)
         else:
-            return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)   
+            return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
 
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
