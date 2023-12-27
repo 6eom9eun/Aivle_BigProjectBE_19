@@ -13,52 +13,25 @@ with open(BASE_DIR/'secrets.json') as f:
 
 os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 
-
-# 텍스트를 음성으로 변환
-def Text_TO_Speech(sentence):
-    # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
-    json_file_path = ".../ocr_results.json"
-    
-    # 언어 설정(기본 값은 'en', 한국어는 'ko')
-    language='ko'
-    
-    # gTTS 객체 생성
-    tts = gTTS(text=sentence, lang=language, slow=False)
-    
-    # 음성 파일로 저장
-    tts.save("output.mp3")
-    
-
-# 음성을 텍스트로 변환
-def Speech_To_Text(file_path):
-    client=OpenAI()
-    
-    audio_file=open(file_path,'rb')
-    
-    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
-    
-    return transcript
-
-
-
-
 #----------------정민권 수정 사항 (아래)--------
-!pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-!pip install git+https://github.com/sanchit-gandhi/whisper-jax.git
-!pip install cached-property
+# !pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+# !pip install git+https://github.com/sanchit-gandhi/whisper-jax.git
+# !pip install cached-property
+# !pip install ipython
+# !pip install torch
 
 from IPython.display import Audio, display
 from whisper_jax import FlaxWhisperPipline
 import jax.numpy as jnp
 
 # 텍스트를 음성으로 변환(TTS)
-def Text_TO_Speech(sentence):
+def Text_To_Speech(sentence):
     # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
     json_file_path = ".../ocr_results.json"
 
     #지정된 경로로 json 파일 로드
     with open(json_file_path, "r", encoding="utf-8") as json_file:
-    ocr_results = json.load(json_file)
+        ocr_results = json.load(json_file)
     
     # 단락을 음성으로 변환 후 저장
     for i, paragraph in enumerate(ocr_results, start=1):
@@ -68,7 +41,6 @@ def Text_TO_Speech(sentence):
     # 음성 파일로 저장
         tts.save(mp3_file_path)
     
-
 
 # 음성을 텍스트로 변환(STT)
 
@@ -86,3 +58,28 @@ def Speech_To_Text(file_path):
     # transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
     
     return transcript
+
+# 텍스트를 음성으로 변환
+# def Text_TO_Speech(sentence):
+#     # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
+#     json_file_path = ".../ocr_results.json"
+    
+#     # 언어 설정(기본 값은 'en', 한국어는 'ko')
+#     language='ko'
+    
+#     # gTTS 객체 생성
+#     tts = gTTS(text=sentence, lang=language, slow=False)
+    
+#     # 음성 파일로 저장
+#     tts.save("output.mp3")
+    
+
+# # 음성을 텍스트로 변환
+# def Speech_To_Text(file_path):
+#     client=OpenAI()
+    
+#     audio_file=open(file_path,'rb')
+    
+#     transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
+    
+#     return transcript

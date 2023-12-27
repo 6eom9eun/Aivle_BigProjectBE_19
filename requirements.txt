@@ -13,3 +13,4 @@ requests
 gtts
 pydub
 Pillow
+torch

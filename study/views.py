@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Word, Quiz
 from .gpt import *
+from .text_speech import *
 from django.http import JsonResponse
 
 from rest_framework.permissions import IsAuthenticated
@@ -31,3 +32,20 @@ class RandomQuizView(APIView):
             return JsonResponse({"question_response": response}, status=status.HTTP_200_OK)
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class TextToSpeechView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        sentence = request.data.get('sentence')
+        Text_To_Speech(sentence)
+        return Response({'message': 'Text-to-Speech 변환 선공'}, status=status.HTTP_200_OK)
+
+class SpeechToTextView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        file_path = request.data.get('file_path')
+        transcript = Speech_To_Text(file_path)
+        return Response({'transcript': transcript}, status=status.HTTP_200_OK)
