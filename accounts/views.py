@@ -21,8 +21,12 @@ class LoginView(generics.GenericAPIView):
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data # Token
+        try:
+            serializer.is_valid(raise_exception=True)
+        except serializers.ValidationError as e:
+            return Response({'detail': '유효성 검사 실패', 'errors': e.detail}, status=status.HTTP_400_BAD_REQUEST)
+
+        token = serializer.validated_data  # Token
         return Response({"token": token.key}, status=status.HTTP_200_OK)
 
 # 유저 정보 뷰    
@@ -94,8 +98,12 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
             obj = queryset.get(user=self.request.user)
             self.check_object_permissions(self.request, obj)
             return obj
+        except User.DoesNotExist:
+            return Response({'detail': '사용자가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         except Profile.DoesNotExist:
             return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request, *args, **kwargs):
         profile_serializer = self.get_serializer(self.get_object())
@@ -130,6 +138,8 @@ class OtherUserProfileView(RetrieveAPIView):
             return Response({'detail': '사용자가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         except Profile.DoesNotExist:
             return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request, *args, **kwargs):
         profile_serializer = self.get_serializer(self.get_object())
