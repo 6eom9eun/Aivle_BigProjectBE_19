@@ -7,8 +7,7 @@ from .text_speech import *
 from .spell_correct import *
 from .serializers import *
 from django.http import JsonResponse
-from django.utils import timezone
-
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
@@ -88,6 +87,12 @@ class QuizListView(APIView):
         serializer = QuizListSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Quiz.objects.all()
+    serializer_class = QuizSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'quiz_id'
+    
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
