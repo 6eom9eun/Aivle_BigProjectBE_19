@@ -29,7 +29,7 @@ class Quiz(models.Model):
         return f"{self.user.username}'s Quiz on {self.word}"
 
     class Meta:
-        ordering = ['-solved_date']
+        ordering = ['-quiz_id']
 
 class Audio(models.Model):
     audio_id = models.AutoField(primary_key=True)
