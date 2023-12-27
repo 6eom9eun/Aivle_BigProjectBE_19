@@ -44,13 +44,13 @@ class RandomQuizView(APIView):
             )
             quiz_instance.save()
             
-            response_with_word_meaning = {
+            response = {
                 'word': word,
                 'meaning': meaning,
                 'question_response': response
             }
 
-            return JsonResponse(response_with_word_meaning, status=status.HTTP_200_OK)
+            return JsonResponse(response, status=status.HTTP_200_OK)
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
