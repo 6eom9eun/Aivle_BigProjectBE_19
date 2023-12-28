@@ -64,10 +64,13 @@ class QuizListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = QuizSerializer
     lookup_field = 'quiz_id'
+
+    def get_queryset(self):
+        return Quiz.objects.filter(user=self.request.user)
     
 class CompositionView(APIView):
     authentication_classes = [TokenAuthentication]
