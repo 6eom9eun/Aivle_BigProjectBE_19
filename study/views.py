@@ -87,7 +87,7 @@ class CompositionView(APIView):
             return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 최근 맞춘 5개의 퀴즈에서 5개의 단어 가져오기
-        quiz_words = [quiz.word.word for quiz in resolved_quizzes]
+        quiz_words = [{'id': quiz.word.id, 'word': quiz.word.word, 'meaning': quiz.word.meaning} for quiz in resolved_quizzes]
 
         # 사용자에게 5개의 단어 보여주기
         return JsonResponse({"quiz_words": quiz_words}, status=status.HTTP_200_OK)

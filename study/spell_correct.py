@@ -11,8 +11,8 @@ from konlpy.tag import Komoran
 
 def korean_pos_tagging(sentence):
     komoran = Komoran()
-    pos_tags = komoran.pos(sentence)
-    return pos_tags
+    morphs_tags = komoran.morphs(sentence)
+    return morphs_tags
 
 def is_correct(sentence, words):
     # 모델 다운받기
