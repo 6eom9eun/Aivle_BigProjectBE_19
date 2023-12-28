@@ -1,13 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
-    
+
+# 단어, 단어 뜻 테이블
 class Word(models.Model):
     word = models.CharField(max_length=255)
     meaning = models.TextField()
 
     def __str__(self):
         return f"{self.word} - {self.meaning}"
-    
+
+# 사용자들이 생성한 퀴즈 테이블    
 class Quiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)

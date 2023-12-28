@@ -14,6 +14,7 @@ from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련�
 from django.urls import reverse
 from django.shortcuts import redirect
 
+# 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -41,7 +42,7 @@ class RandomQuizView(APIView):
             quiz_instance = Quiz(
                 user=request.user,
                 word=random_word_entry,
-                quiz=response,
+                quiz=json.dumps(response),
                 answer=idx
             )
             quiz_instance.save()
@@ -50,7 +51,8 @@ class RandomQuizView(APIView):
             return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
+
+# 퀴즈 리스트 뷰       
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -60,6 +62,7 @@ class QuizListView(APIView):
         serializer = QuizListSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# 퀴즈 디테일 뷰
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -68,7 +71,8 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Quiz.objects.filter(user=self.request.user)
-    
+
+# 작문 뷰
 class CompositionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -76,33 +80,43 @@ class CompositionView(APIView):
     def get(self, request):
         # 사용자의 최근 5개 맞춘 퀴즈 가져오기
         resolved_quizzes = Quiz.objects.filter(
-            Q(user=request.user) & ~Q(solved_date=None) # 사용자 and solved_date가 none이 아닌 것 ORDER BY DESC
+            Q(user=request.user) & ~Q(solved_date=None)
         ).order_by('-quiz_id')[:5]
 
         if len(resolved_quizzes) < 5:
             return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 사용자에게 2개의 단어 선택하도록 요청
-        selected_words_by_user = request.GET.getlist('selected_words')
+        # 퀴즈에서 5개의 단어 가져오기
+        quiz_words = [quiz.word for quiz in resolved_quizzes]
 
-        if len(selected_words_by_user) != 2:
+        # 사용자에게 2개의 단어 선택하도록 요청
+        selected_word_ids_by_user = request.GET.getlist('selected_words')
+
+        if len(selected_word_ids_by_user) != 2:
             return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 선택된 단어를 사용하여 작문
-        composition_words = selected_words_by_user
-        composition_text = " ".join(composition_words)
+        selected_words = Word.objects.filter(id__in=selected_word_ids_by_user)
 
-        # 작문이 올바른지 확인, spell_correct.py 내 모델 사용
+        if len(selected_words) != 2:
+            return JsonResponse({"error": "올바른 단어 ID를 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+        selected_words_info = [{'word': word.word, 'meaning': word.meaning} for word in selected_words]
+
+        # 선택된 단어를 사용하여 작문
+        composition_words = selected_words_info
+        composition_text = request.GET.get('composition_text', '')
+
+        # 작문이 올바른지 확인, spell_correct.py 모델 사용
         composition_result = is_correct(composition_text, composition_words)
 
         response_data = {
-            'selected_words_by_user': selected_words_by_user,
             'composition_text': composition_text,
+            'composition_words': composition_words,
             'composition_result': composition_result
         }
-
+        
         return JsonResponse(response_data, status=status.HTTP_200_OK)
-    
+
+# TTS 뷰  
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -111,6 +125,7 @@ class TextToSpeechView(APIView):
         Text_To_Speech(sentence)
         return Response({'message': 'Text-to-Speech 변환 성공'}, status=status.HTTP_200_OK)
 
+# STT 뷰
 class SpeechToTextView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
