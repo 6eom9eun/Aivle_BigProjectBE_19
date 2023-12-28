@@ -75,11 +75,11 @@ class CompositionView(APIView):
 
     def get(self, request):
         # 사용자의 최근 5개 맞춘 퀴즈 가져오기
-        last_quizzes = Quiz.objects.filter(
+        resolved_quizzes = Quiz.objects.filter(
             Q(user=request.user) & ~Q(solved_date=None) # 사용자 and solved_date가 none이 아닌 것 ORDER BY DESC
         ).order_by('-quiz_id')[:5]
 
-        if len(last_quizzes) < 5:
+        if len(resolved_quizzes) < 5:
             return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 사용자에게 2개의 단어 선택하도록 요청
