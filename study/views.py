@@ -90,9 +90,9 @@ class CompositionView(APIView):
 
         # 선택된 단어를 사용하여 작문
         composition_words = selected_words_by_user
-        composition_text = " ".join(composition_words)
+        composition_text = request.GET.get('composition_text', '')
 
-        # 작문이 올바른지 확인, spell_correct.py 내 모델 사용
+        # 작문이 올바른지 확인, spell_correct.py 모델 사용
         composition_result = is_correct(composition_text, composition_words)
 
         response_data = {
