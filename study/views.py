@@ -11,6 +11,8 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
+from django.urls import reverse
+from django.shortcuts import redirect
 
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -43,14 +45,9 @@ class RandomQuizView(APIView):
                 answer=idx
             )
             quiz_instance.save()
-            
-            response = {
-                'word': word,
-                'meaning': meaning,
-                'question_response': response
-            }
 
-            return JsonResponse(response, status=status.HTTP_200_OK)
+            # 새로 생성된 퀴즈의 quiz_id를 사용하여 상세 페이지로 리디렉션
+            return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
