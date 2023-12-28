@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
 
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -67,6 +68,40 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'quiz_id'
+    
+class CompositionView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 사용자의 최근 5개 맞춘 퀴즈 가져오기
+        last_quizzes = Quiz.objects.filter(
+            Q(user=request.user) & ~Q(solved_date=None) # 사용자 and solved_date가 none이 아닌 것 ORDER BY DESC
+        ).order_by('-quiz_id')[:5]
+
+        if len(last_quizzes) < 5:
+            return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 사용자에게 2개의 단어 선택하도록 요청
+        selected_words_by_user = request.GET.getlist('selected_words')
+
+        if len(selected_words_by_user) != 2:
+            return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 선택된 단어를 사용하여 작문
+        composition_words = selected_words_by_user
+        composition_text = " ".join(composition_words)
+
+        # 작문이 올바른지 확인
+        composition_result = is_correct(composition_text)
+
+        response_data = {
+            'selected_words_by_user': selected_words_by_user,
+            'composition_text': composition_text,
+            'composition_result': composition_result
+        }
+
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
     
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
