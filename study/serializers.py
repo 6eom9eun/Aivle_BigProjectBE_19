@@ -8,7 +8,7 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = '__all__'
         
-    def update(self, instance, validated_data): # 채팅 로그 쌓기
+    def update(self, instance, validated_data):
         new_chat_log = validated_data.get('chat_log', '')
         
         if instance.chat_log:

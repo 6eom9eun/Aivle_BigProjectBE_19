@@ -46,7 +46,7 @@ class RandomQuizView(APIView):
             )
             quiz_instance.save()
 
-            # 새로 생성된 퀴즈의 quiz_id를 사용하여 상세 페이지로 리디렉션
+            # 새로 생성된 퀴즈의 quiz_id를 사용하여 상세 페이지로 리다이렉션
             return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
@@ -92,8 +92,8 @@ class CompositionView(APIView):
         composition_words = selected_words_by_user
         composition_text = " ".join(composition_words)
 
-        # 작문이 올바른지 확인
-        composition_result = is_correct(composition_text)
+        # 작문이 올바른지 확인, spell_correct.py 내 모델 사용
+        composition_result = is_correct(composition_text, composition_words)
 
         response_data = {
             'selected_words_by_user': selected_words_by_user,
