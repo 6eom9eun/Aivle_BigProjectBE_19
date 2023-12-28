@@ -27,8 +27,9 @@ class Quiz(models.Model):
             else:
                 self.quiz_id = 1
         super(Quiz, self).save(*args, **kwargs)
+        
     def __str__(self):
-        return f"{self.user.username}'s Quiz on {self.word}"
+        return f"User: {self.user}, Word: {self.word}, Quiz: {self.quiz}, Solved Date: {self.solved_date}, Chat Log: {self.chat_log}, Quiz ID: {self.quiz_id}"
 
     class Meta:
         ordering = ['-quiz_id']

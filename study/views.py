@@ -93,6 +93,7 @@ class CompositionView(APIView):
         return JsonResponse({"quiz_words": quiz_words}, status=status.HTTP_200_OK)
 
     def post(self, request):
+        print(request.data)
         # 사용자는 단어 2개 고르기
         selected_word_by_user = request.data.get('selected_words', [])
 
