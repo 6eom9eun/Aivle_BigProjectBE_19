@@ -93,7 +93,6 @@ class CompositionView(APIView):
         return JsonResponse({"quiz_words": quiz_words}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        print(request.data)
         # 사용자는 단어 2개 고르기
         selected_word_by_user = request.data.get('selected_words', [])
 
@@ -108,9 +107,10 @@ class CompositionView(APIView):
         selected_words_info = [{'word': word.word, 'meaning': word.meaning} for word in selected_words]
 
         # 선택된 단어를 사용하여 작문
-        composition_words = selected_words_info
+        composition_words = [word['word'] for word in selected_words_info]
+        print(composition_words)
         composition_text = request.data.get('composition_text', '')
-
+        print(composition_text)
         # 작문이 올바른지 확인, spell_correct.py 모델 사용
         composition_result = is_correct(composition_text, composition_words)
 
