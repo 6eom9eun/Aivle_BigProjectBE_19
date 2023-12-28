@@ -41,7 +41,7 @@ class RandomQuizView(APIView):
             quiz_instance = Quiz(
                 user=request.user,
                 word=random_word_entry,
-                quiz=response,
+                quiz=json.dumps(response),
                 answer=idx
             )
             quiz_instance.save()
