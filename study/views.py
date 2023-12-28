@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Word, Quiz
-from .gpt import *
+from .new_gpt import *
 from .text_speech import *
 from .spell_correct import *
 from .serializers import *
@@ -14,6 +14,7 @@ from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련�
 from django.urls import reverse
 from django.shortcuts import redirect
 
+# 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -30,19 +31,19 @@ class RandomQuizView(APIView):
             # 질문 생성
             response = make_problem(word, meaning)
 
-            # 정답 추출
-            idx = None
-            for index, answer in enumerate(response['questions'][0]['answers']):
-                if answer['correct']:
-                    idx = index
-                    break
+            # # 정답 추출
+            # idx = None
+            # for index, answer in enumerate(response['questions'][0]['answers']):
+            #     if answer['correct']:
+            #         idx = index
+            #         break
 
             # 사용자에게 응답 반환 및 정답 저장
             quiz_instance = Quiz(
                 user=request.user,
                 word=random_word_entry,
                 quiz=json.dumps(response),
-                answer=idx
+                # answer=idx
             )
             quiz_instance.save()
 
@@ -50,7 +51,8 @@ class RandomQuizView(APIView):
             return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
+
+# 퀴즈 리스트 뷰       
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -60,6 +62,7 @@ class QuizListView(APIView):
         serializer = QuizListSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# 퀴즈 디테일 뷰
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -68,7 +71,8 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Quiz.objects.filter(user=self.request.user)
-    
+
+# 작문 뷰
 class CompositionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -82,25 +86,31 @@ class CompositionView(APIView):
         if len(resolved_quizzes) < 5:
             return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 퀴즈에서 5개의 단어 가져오기
-        quiz_words = [quiz.word for quiz in resolved_quizzes]
+        # 최근 맞춘 5개의 퀴즈에서 5개의 단어 가져오기
+        quiz_words = [{'id': quiz.word.id, 'word': quiz.word.word, 'meaning': quiz.word.meaning} for quiz in resolved_quizzes]
 
-        # 사용자에게 2개의 단어 선택하도록 요청
-        selected_word_ids_by_user = request.GET.getlist('selected_words')
+        # 사용자에게 5개의 단어 보여주기
+        return JsonResponse({"quiz_words": quiz_words}, status=status.HTTP_200_OK)
 
-        if len(selected_word_ids_by_user) != 2:
+    def post(self, request):
+        # 사용자는 단어 2개 고르기
+        selected_word_by_user = request.data.get('selected_words', [])
+
+        if len(selected_word_by_user) != 2:
             return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
 
-        selected_words = Word.objects.filter(id__in=selected_word_ids_by_user)
+        selected_words = Word.objects.filter(id__in=selected_word_by_user)
 
         if len(selected_words) != 2:
             return JsonResponse({"error": "올바른 단어 ID를 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+
         selected_words_info = [{'word': word.word, 'meaning': word.meaning} for word in selected_words]
 
         # 선택된 단어를 사용하여 작문
-        composition_words = selected_words_info
-        composition_text = request.GET.get('composition_text', '')
-
+        composition_words = [word['word'] for word in selected_words_info]
+        print(composition_words)
+        composition_text = request.data.get('composition_text', '')
+        print(composition_text)
         # 작문이 올바른지 확인, spell_correct.py 모델 사용
         composition_result = is_correct(composition_text, composition_words)
 
@@ -109,9 +119,10 @@ class CompositionView(APIView):
             'composition_words': composition_words,
             'composition_result': composition_result
         }
-        
+
         return JsonResponse(response_data, status=status.HTTP_200_OK)
-    
+
+# TTS 뷰  
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -120,6 +131,7 @@ class TextToSpeechView(APIView):
         Text_To_Speech(sentence)
         return Response({'message': 'Text-to-Speech 변환 성공'}, status=status.HTTP_200_OK)
 
+# STT 뷰
 class SpeechToTextView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
