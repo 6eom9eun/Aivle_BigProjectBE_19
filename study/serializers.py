@@ -4,6 +4,8 @@ from .models import *
 from rest_framework import serializers
 
 class QuizSerializer(serializers.ModelSerializer):
+    word = serializers.CharField(source='word.word', read_only=True)
+    
     class Meta:
         model = Quiz
         fields = '__all__'
