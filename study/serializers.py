@@ -8,6 +8,19 @@ class QuizSerializer(serializers.ModelSerializer):
         model = Quiz
         fields = '__all__'
         
+    def update(self, instance, validated_data): # 채팅 로그 쌓기
+        new_chat_log = validated_data.get('chat_log', '')
+        
+        if instance.chat_log:
+            instance.chat_log += f"\n{new_chat_log}"
+        else:
+            instance.chat_log = new_chat_log
+            
+        instance.solved_date = validated_data.get('solved_date', instance.solved_date)
+
+        instance.save()
+        return instance
+        
 class QuizListSerializer(ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     word = serializers.CharField(source='word.word', read_only=True)

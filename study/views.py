@@ -10,6 +10,9 @@ from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
+from django.urls import reverse
+from django.shortcuts import redirect
 
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -42,42 +45,12 @@ class RandomQuizView(APIView):
                 answer=idx
             )
             quiz_instance.save()
-            
-            response = {
-                'word': word,
-                'meaning': meaning,
-                'question_response': response
-            }
 
-            return JsonResponse(response, status=status.HTTP_200_OK)
+            # 새로 생성된 퀴즈의 quiz_id를 사용하여 상세 페이지로 리디렉션
+            return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
-    # 사용자 문제 풀기
-    # def post(self, request):
-    #     # 요청에서 데이터 가져오기
-    #     user_answer = request.data.get('user_answer')  # 사용자의 답변이 요청 데이터
-    #     # 요청 데이터 유효성 검사
-    #     if user_answer is None:
-    #         return JsonResponse({"error": "user_answer는 요청 데이터에 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # 사용자에 대한 퀴즈 인스턴스 가져오기
-    #     quiz_instance = Quiz.objects.filter(user=request.user, solved_date__isnull=True).first()
-
-    #     if quiz_instance:
-    #         # 사용자의 답변이 정답과 일치하는지 확인
-    #         if quiz_instance.answer == int(user_answer):
-    #             # 정답이 맞으면 solved_date를 현재 타임스탬프로 갱신
-    #             quiz_instance.solved_date = timezone.now()
-    #             quiz_instance.save()
-
-    #             return JsonResponse({"message": "정답입니다! 풀이 날짜가 갱신되었습니다."}, status=status.HTTP_200_OK)
-    #         else:
-    #             return JsonResponse({"message": "틀린 답변입니다. 다시 시도해보세요!"}, status=status.HTTP_400_BAD_REQUEST)
-    #     else:
-    #         return JsonResponse({"error": "사용자에 대한 활성화된 퀴즈가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
-
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -88,10 +61,47 @@ class QuizListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    serializer_class = QuizSerializer
     lookup_field = 'quiz_id'
+
+    def get_queryset(self):
+        return Quiz.objects.filter(user=self.request.user)
+    
+class CompositionView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 사용자의 최근 5개 맞춘 퀴즈 가져오기
+        resolved_quizzes = Quiz.objects.filter(
+            Q(user=request.user) & ~Q(solved_date=None) # 사용자 and solved_date가 none이 아닌 것 ORDER BY DESC
+        ).order_by('-quiz_id')[:5]
+
+        if len(resolved_quizzes) < 5:
+            return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 사용자에게 2개의 단어 선택하도록 요청
+        selected_words_by_user = request.GET.getlist('selected_words')
+
+        if len(selected_words_by_user) != 2:
+            return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 선택된 단어를 사용하여 작문
+        composition_words = selected_words_by_user
+        composition_text = " ".join(composition_words)
+
+        # 작문이 올바른지 확인
+        composition_result = is_correct(composition_text)
+
+        response_data = {
+            'selected_words_by_user': selected_words_by_user,
+            'composition_text': composition_text,
+            'composition_result': composition_result
+        }
+
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
     
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
