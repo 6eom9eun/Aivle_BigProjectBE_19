@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Word, Quiz
-from .gpt import *
-from .text_speech import *
-from .spell_correct import *
+from .ai.gpt import *
+from .ai.text_speech import *
+from .ai.spell_correct import *
 from .serializers import *
 from django.http import JsonResponse
 from rest_framework import generics
@@ -14,6 +14,7 @@ from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련�
 from django.urls import reverse
 from django.shortcuts import redirect
 
+# 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -50,7 +51,8 @@ class RandomQuizView(APIView):
             return redirect(reverse('quiz-detail', kwargs={'quiz_id': quiz_instance.quiz_id}))
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
+
+# 퀴즈 리스트 뷰       
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -60,6 +62,7 @@ class QuizListView(APIView):
         serializer = QuizListSerializer(quizzes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# 퀴즈 디테일 뷰
 class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -68,7 +71,8 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Quiz.objects.filter(user=self.request.user)
-    
+
+# 작문 뷰
 class CompositionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -111,7 +115,8 @@ class CompositionView(APIView):
         }
         
         return JsonResponse(response_data, status=status.HTTP_200_OK)
-    
+
+# TTS 뷰  
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -120,6 +125,7 @@ class TextToSpeechView(APIView):
         Text_To_Speech(sentence)
         return Response({'message': 'Text-to-Speech 변환 성공'}, status=status.HTTP_200_OK)
 
+# STT 뷰
 class SpeechToTextView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
