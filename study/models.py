@@ -14,7 +14,7 @@ class Quiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     word = models.ForeignKey(Word, on_delete=models.CASCADE)
     quiz = models.TextField(blank=True, null=False)
-    answer = models.IntegerField(null=True, blank=True)
+    # answer = models.IntegerField(null=True, blank=True) // 프론트에서 정답 처리
     solved_date = models.DateTimeField(null=True, blank=True)
     chat_log = models.TextField(blank=True, null=True)
     quiz_id = models.IntegerField(null=True, blank=True)

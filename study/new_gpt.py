@@ -28,8 +28,8 @@ def make_sentence(word, meaning):
     # 파인튜닝 모델
     llm = ChatOpenAI(
         temperature=0.1,
-        model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
-        #model="gpt-3.5-turbo-1106",
+        #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
+        model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
     )
@@ -95,8 +95,8 @@ def make_problem(word, meaning):
     # 파인튜닝 모델
     llm = ChatOpenAI(
         temperature=0.1,
-        model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
-        #model="gpt-3.5-turbo-1106",
+        #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
+        model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
     )
@@ -170,5 +170,5 @@ def make_problem(word, meaning):
         ]
     }
 
-    return json.dumps(new_format, ensure_ascii=False)
+    return new_format
     
