@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Word, Quiz
-from .ai.gpt import *
-from .ai.text_speech import *
-from .ai.spell_correct import *
+from .gpt import *
+from .text_speech import *
+from .spell_correct import *
 from .serializers import *
 from django.http import JsonResponse
 from rest_framework import generics
