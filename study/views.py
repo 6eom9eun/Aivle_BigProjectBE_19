@@ -52,31 +52,54 @@ class RandomQuizView(APIView):
             return JsonResponse(response, status=status.HTTP_200_OK)
         else:
             return JsonResponse({"error": "데이터베이스에서 단어를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
-    # 사용자 문제 풀기
-    # def post(self, request):
-    #     # 요청에서 데이터 가져오기
-    #     user_answer = request.data.get('user_answer')  # 사용자의 답변이 요청 데이터
-    #     # 요청 데이터 유효성 검사
-    #     if user_answer is None:
-    #         return JsonResponse({"error": "user_answer는 요청 데이터에 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-    #     # 사용자에 대한 퀴즈 인스턴스 가져오기
-    #     quiz_instance = Quiz.objects.filter(user=request.user, solved_date__isnull=True).first()
+class CompositionView(APIView): # 작문뷰 만드는 중
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    #     if quiz_instance:
-    #         # 사용자의 답변이 정답과 일치하는지 확인
-    #         if quiz_instance.answer == int(user_answer):
-    #             # 정답이 맞으면 solved_date를 현재 타임스탬프로 갱신
-    #             quiz_instance.solved_date = timezone.now()
-    #             quiz_instance.save()
+    def get(self, request):
+        # 사용자의 최근 5개 퀴즈 가져오기
+        last_quizzes = Quiz.objects.filter(user=request.user).order_by('-quiz_id')[:5]
 
-    #             return JsonResponse({"message": "정답입니다! 풀이 날짜가 갱신되었습니다."}, status=status.HTTP_200_OK)
-    #         else:
-    #             return JsonResponse({"message": "틀린 답변입니다. 다시 시도해보세요!"}, status=status.HTTP_400_BAD_REQUEST)
-    #     else:
-    #         return JsonResponse({"error": "사용자에 대한 활성화된 퀴즈가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        
+        if len(last_quizzes) < 5:
+            return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 최근 5개 퀴즈에서 2개의 무작위 단어 가져오기
+        selected_words = [quiz.word.word for quiz in last_quizzes]
+
+        # 중복 제거
+        selected_words = list(set(selected_words))
+
+        if len(selected_words) < 2:
+            return JsonResponse({"error": "충분한 고유한 단어가 발견되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 사용자에게 2개의 단어 선택하도록 요청
+        # 이 부분을 사용자가 직접 선택하도록 변경
+        # 예를 들어, 선택된 단어를 URL 쿼리 매개변수로 전달받을 수 있습니다.
+        # /study/composition/?selected_words=단어1,단어2
+        selected_words_by_user = request.GET.getlist('selected_words')
+
+        if len(selected_words_by_user) != 2 or not all(word in selected_words for word in selected_words_by_user):
+            return JsonResponse({"error": "유효하지 않은 단어 선택입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 선택된 단어를 사용하여 작문 생성
+        composition_words = selected_words_by_user  # 사용자가 선택한 단어를 사용
+
+        # korean_pos_tagging 및 is_correct 함수를 사용하여 작문 로직을 구현하세요
+        composition_text = " ".join(composition_words)  # 예: 선택된 단어를 공백으로 연결
+
+        # 작문이 올바른지 확인
+        composition_result = is_correct(composition_text, selected_words)
+
+        response_data = {
+            'selected_words': selected_words,
+            'selected_words_by_user': selected_words_by_user,
+            'composition_text': composition_text,
+            'composition_result': composition_result
+        }
+
+        return JsonResponse(response_data, status=status.HTTP_200_OK)
+
 
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]
