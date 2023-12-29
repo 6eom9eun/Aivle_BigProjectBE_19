@@ -13,6 +13,10 @@ from rest_framework.authentication import TokenAuthentication
 from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
 from django.urls import reverse
 from django.shortcuts import redirect
+import json
+from paddleocr import PaddleOCR
+from django.conf import settings
+import os
 
 # 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
@@ -139,4 +143,39 @@ class SpeechToTextView(APIView):
         file_path = request.data.get('file_path') # '{"file_path": "/media/stt/file.wav"}' 실제 오디오 파일 경로 변경
         transcript = Speech_To_Text(file_path)
         return Response({'transcript': transcript}, status=status.HTTP_200_OK)
-    
+
+class OcrView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = OcrSerializer(data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save() 
+
+            img_filename = instance.image.name
+            img_path = os.path.join(settings.MEDIA_ROOT, img_filename)
+
+            ocr = PaddleOCR(lang="korean")
+            result = ocr.ocr(img_path, cls=False)
+            text_results = []
+
+            for line in result:
+                paragraph = ""
+
+                for word_info in line:
+                    try:
+                        if isinstance(word_info, list) and len(word_info) == 4 and all(isinstance(point, list) and len(point) == 2 for point in word_info):
+                            pass
+                        elif isinstance(word_info, tuple) and len(word_info) == 2 and isinstance(word_info[0], str) and isinstance(word_info[1], (int, float)):
+                            word_text, _ = word_info
+                            paragraph += word_text + " "
+                        else:
+                            print(f"예기치 않은 구조 word_info: {word_info}")
+                    except (TypeError, ValueError) as e:
+                        print(f"처리중 오류 발생 word_info: {e}")
+
+                if paragraph.strip():
+                    text_results.append(paragraph.strip())
+
+            return Response({'text_results': text_results}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

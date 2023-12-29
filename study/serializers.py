@@ -34,3 +34,8 @@ class QuizListSerializer(ModelSerializer):
     class Meta:
         model = Quiz
         fields = ['quiz_id', 'word', 'meaning', 'solved_date', 'username']
+        
+class OcrSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ocr
+        fields = '__all__'
