@@ -11,6 +11,7 @@ from rest_framework.generics import UpdateAPIView, RetrieveAPIView
 from .serializers import *
 
 
+<<<<<<< Updated upstream
 from django.conf import settings
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -42,6 +43,17 @@ BASE_URL = "http://127.0.0.1:8000/"
 KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
 # ----------------------------------------
 
+=======
+# from django.conf import settings
+# from accounts.models import User
+# from allauth.socialaccount.models import SocialAccount
+# from dj_rest_auth.registration.views import SocialLoginView
+# from allauth.socialaccount.providers.google import views as google_view
+# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+# from django.http import JsonResponse
+# import requests
+# from json.decoder import JSONDecodeError
+>>>>>>> Stashed changes
 
 # 회원가입 뷰 : 생성 기능 -> CreateAPIView
 class SignupView(generics.CreateAPIView):
