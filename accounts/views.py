@@ -47,6 +47,7 @@ KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
 BASE_URL = "http://127.0.0.1:8000/"
 # ----------------------------------------
 
+=======
 # from django.conf import settings
 # from accounts.models import User
 # from allauth.socialaccount.models import SocialAccount

@@ -13,6 +13,10 @@ from rest_framework.authentication import TokenAuthentication
 from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
 from django.urls import reverse
 from django.shortcuts import redirect
+import json
+from paddleocr import PaddleOCR
+from django.conf import settings
+import os
 
 # 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
@@ -122,21 +126,84 @@ class CompositionView(APIView):
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
 
-# TTS 뷰  
+# OCR API 뷰
+class OcrView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        image_data = request.data.get('image')
+
+        if image_data:
+            try:
+                # 이미지를 파일로 저장하지 않고 바이트 데이터를 사용하여 OCR 수행
+                ocr = PaddleOCR(lang="korean")
+                result = ocr.ocr(image_data.read(), cls=False)
+                text_results = []
+
+                for line in result:
+                    paragraph = ""
+                    for word_info in line:
+                        try:
+                            if isinstance(word_info, list) and len(word_info) == 4 and all(isinstance(point, list) and len(point) == 2 for point in word_info):
+                                pass
+                            elif isinstance(word_info, tuple) and len(word_info) == 2 and isinstance(word_info[0], str) and isinstance(word_info[1], (int, float)):
+                                word_text, _ = word_info
+                                paragraph += word_text + " "
+                            else:
+                                print(f"예기치 않은 구조 in word_info: {word_info}")
+                        except (TypeError, ValueError) as e:
+                            print(f"처리 중 에러 word_info: {e}")
+
+                    if paragraph.strip():
+                        text_results.append(paragraph.strip())
+
+                return Response({'text_results': text_results}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({'error': 'Image data not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+# TTS API 뷰
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        sentence = request.data.get('sentence')# JSON {"sentence": "안녕하세요. 반갑습니다."}
-        Text_To_Speech(sentence)
-        return Response({'message': 'Text-to-Speech 변환 성공'}, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args, **kwargs):
+        # 클라이언트에서 POST 요청으로 텍스트를 받아옴
+        text = request.data.get('text', '')
 
-# STT 뷰
+        # 텍스트를 음성으로 변환
+        tts = gTTS(text=text, lang="ko", slow=False)
+        
+        # 임시 파일로 저장 = 데이터가 쌓이지 않음
+        mp3_file_path = "/tmp/speech.mp3"
+        tts.save(mp3_file_path)
+
+        # 브라우저로 음성 파일을 전송
+        with open(mp3_file_path, 'rb') as file:
+            response = HttpResponse(file.read(), content_type='audio/mpeg')
+            response['Content-Disposition'] = 'inline; filename=speech.mp3'
+        
+        return response
+
+# STT API 뷰
 class SpeechToTextView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        file_path = request.data.get('file_path') # '{"file_path": "/media/stt/file.wav"}' 실제 오디오 파일 경로 변경
-        transcript = Speech_To_Text(file_path)
-        return Response({'transcript': transcript}, status=status.HTTP_200_OK)
-    
+
+    def post(self, request, *args, **kwargs):
+        audio_file = request.FILES.get('audio', None)
+        if not audio_file:
+            return Response({"error": "오디오파일 받지않았음."}, status=400)
+
+        # 오디오 파일을 임시로 저장 = 데이터가 쌓이지 않음
+        audio_file_path = "/tmp/audio.wav"
+        with open(audio_file_path, 'wb') as file:
+            for chunk in audio_file.chunks():
+                file.write(chunk)
+        
+        # 음성을 텍스트로 변환
+        transcript = Speech_To_Text(audio_file_path)
+        
+        return Response({"text": transcript['text']})
