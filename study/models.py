@@ -33,11 +33,6 @@ class Quiz(models.Model):
 
     class Meta:
         ordering = ['-quiz_id']
-        
-class Ocr(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='ocr_images/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 class Audio(models.Model):
     audio_id = models.AutoField(primary_key=True)
