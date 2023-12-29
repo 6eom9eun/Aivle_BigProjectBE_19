@@ -14,10 +14,11 @@ class QuizSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         new_chat_log = validated_data.get('chat_log', '')
         
-        if instance.chat_log:
-            instance.chat_log += f"\n{new_chat_log}"
-        else:
-            instance.chat_log = new_chat_log
+        # if instance.chat_log:
+        #     instance.chat_log += f"\n{new_chat_log}"
+        # else:
+        #     instance.chat_log = new_chat_log
+        instance.chat_log = new_chat_log
             
         instance.solved_date = validated_data.get('solved_date', instance.solved_date)
 
