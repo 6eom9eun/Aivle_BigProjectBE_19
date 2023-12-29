@@ -126,6 +126,7 @@ class CompositionView(APIView):
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
 
+# OCR API 뷰
 class OcrView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -163,7 +164,7 @@ class OcrView(APIView):
         else:
             return Response({'error': 'Image data not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
-
+# TTS API 뷰
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -186,12 +187,23 @@ class TextToSpeechView(APIView):
         
         return response
 
-
-# STT 뷰
+# STT API 뷰
 class SpeechToTextView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        file_path = request.data.get('file_path') # '{"file_path": "/media/stt/file.wav"}' 실제 오디오 파일 경로 변경
-        transcript = Speech_To_Text(file_path)
-        return Response({'transcript': transcript}, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        audio_file = request.FILES.get('audio', None)
+        if not audio_file:
+            return Response({"error": "오디오파일 받지않았음."}, status=400)
+
+        # 오디오 파일을 임시로 저장 = 데이터가 쌓이지 않음
+        audio_file_path = "/tmp/audio.wav"
+        with open(audio_file_path, 'wb') as file:
+            for chunk in audio_file.chunks():
+                file.write(chunk)
+        
+        # 음성을 텍스트로 변환
+        transcript = Speech_To_Text(audio_file_path)
+        
+        return Response({"text": transcript['text']})

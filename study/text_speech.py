@@ -49,15 +49,16 @@ def flush():
   gc.collect()           # 파이썬 가비지 컬렉션을 수행하여 메모리를 정리합니다.
   torch.cuda.empty_cache() # PyTorch의 CUDA 캐시를 비웁니다
 
+import librosa
+
 def Speech_To_Text(file_path):
-    client=OpenAI()
-    
-    audio_file=open(file_path,'rb')
+    client = OpenAI()
+
+    audio_data, _ = librosa.load(file_path, sr=16000)
 
     pipeline = FlaxWhisperPipline("openai/whisper-small", dtype=jnp.float16)
-    transcript = pipeline(audio_file, return_timestamps=True) # small 모델, jnp.float16 데이터 타입 사용
-    # transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
-    
+    transcript = pipeline(audio_data, return_timestamps=True)
+
     return transcript
 
 # 텍스트를 음성으로 변환
