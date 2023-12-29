@@ -23,23 +23,24 @@ os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 from IPython.display import Audio, display
 from whisper_jax import FlaxWhisperPipline
 import jax.numpy as jnp
+from django.http import HttpResponse
 
-# 텍스트를 음성으로 변환(TTS)
-def Text_To_Speech(sentence):
-    # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
-    json_file_path = ".../ocr_results.json"
+# # 텍스트를 음성으로 변환(TTS)
+# def Text_To_Speech(sentence):
+#     # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
+#     json_file_path = ".../ocr_results.json"
 
-    #지정된 경로로 json 파일 로드
-    with open(json_file_path, "r", encoding="utf-8") as json_file:
-        ocr_results = json.load(json_file)
+#     #지정된 경로로 json 파일 로드
+#     with open(json_file_path, "r", encoding="utf-8") as json_file:
+#         ocr_results = json.load(json_file)
     
-    # 단락을 음성으로 변환 후 저장
-    for i, paragraph in enumerate(ocr_results, start=1):
-    # 언어 설정(기본 값은 'en', 한국어는 'ko')
-        tts = gTTS(text=paragraph, lang="ko",slow=False)
-        mp3_file_path = f".../speech_{i}.wav"     #(음성 파일 결과 경로 입력)
-    # 음성 파일로 저장
-        tts.save(mp3_file_path)
+#     # 단락을 음성으로 변환 후 저장
+#     for i, paragraph in enumerate(ocr_results, start=1):
+#     # 언어 설정(기본 값은 'en', 한국어는 'ko')
+#         tts = gTTS(text=paragraph, lang="ko",slow=False)
+#         mp3_file_path = f".../speech_{i}.wav"     #(음성 파일 결과 경로 입력)
+#     # 음성 파일로 저장
+#         tts.save(mp3_file_path)
     
 
 # 음성을 텍스트로 변환(STT)

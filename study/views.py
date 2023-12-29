@@ -127,6 +127,9 @@ class CompositionView(APIView):
         return JsonResponse(response_data, status=status.HTTP_200_OK)
 
 class OcrView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         image_data = request.data.get('image')
 
@@ -160,14 +163,29 @@ class OcrView(APIView):
         else:
             return Response({'error': 'Image data not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
-# TTS 뷰  
+
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    def post(self, request):
-        sentence = request.data.get('sentence')# JSON {"sentence": "안녕하세요. 반갑습니다."}
-        Text_To_Speech(sentence)
-        return Response({'message': 'Text-to-Speech 변환 성공'}, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args, **kwargs):
+        # 클라이언트에서 POST 요청으로 텍스트를 받아옴
+        text = request.data.get('text', '')
+
+        # 텍스트를 음성으로 변환
+        tts = gTTS(text=text, lang="ko", slow=False)
+        
+        # 임시 파일로 저장 = 데이터가 쌓이지 않음
+        mp3_file_path = "/tmp/speech.mp3"
+        tts.save(mp3_file_path)
+
+        # 브라우저로 음성 파일을 전송
+        with open(mp3_file_path, 'rb') as file:
+            response = HttpResponse(file.read(), content_type='audio/mpeg')
+            response['Content-Disposition'] = 'inline; filename=speech.mp3'
+        
+        return response
+
 
 # STT 뷰
 class SpeechToTextView(APIView):
