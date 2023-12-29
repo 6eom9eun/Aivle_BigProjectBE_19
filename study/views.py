@@ -126,6 +126,40 @@ class CompositionView(APIView):
 
         return JsonResponse(response_data, status=status.HTTP_200_OK)
 
+class OcrView(APIView):
+    def post(self, request, *args, **kwargs):
+        image_data = request.data.get('image')
+
+        if image_data:
+            try:
+                # 이미지를 파일로 저장하지 않고 바이트 데이터를 사용하여 OCR 수행
+                ocr = PaddleOCR(lang="korean")
+                result = ocr.ocr(image_data.read(), cls=False)
+                text_results = []
+
+                for line in result:
+                    paragraph = ""
+                    for word_info in line:
+                        try:
+                            if isinstance(word_info, list) and len(word_info) == 4 and all(isinstance(point, list) and len(point) == 2 for point in word_info):
+                                pass
+                            elif isinstance(word_info, tuple) and len(word_info) == 2 and isinstance(word_info[0], str) and isinstance(word_info[1], (int, float)):
+                                word_text, _ = word_info
+                                paragraph += word_text + " "
+                            else:
+                                print(f"예기치 않은 구조 in word_info: {word_info}")
+                        except (TypeError, ValueError) as e:
+                            print(f"처리 중 에러 word_info: {e}")
+
+                    if paragraph.strip():
+                        text_results.append(paragraph.strip())
+
+                return Response({'text_results': text_results}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({'error': 'Image data not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
 # TTS 뷰  
 class TextToSpeechView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -143,39 +177,3 @@ class SpeechToTextView(APIView):
         file_path = request.data.get('file_path') # '{"file_path": "/media/stt/file.wav"}' 실제 오디오 파일 경로 변경
         transcript = Speech_To_Text(file_path)
         return Response({'transcript': transcript}, status=status.HTTP_200_OK)
-
-class OcrView(APIView):
-    def post(self, request, *args, **kwargs):
-        serializer = OcrSerializer(data=request.data)
-
-        if serializer.is_valid():
-            instance = serializer.save() 
-
-            img_filename = instance.image.name
-            img_path = os.path.join(settings.MEDIA_ROOT, img_filename)
-
-            ocr = PaddleOCR(lang="korean")
-            result = ocr.ocr(img_path, cls=False)
-            text_results = []
-
-            for line in result:
-                paragraph = ""
-
-                for word_info in line:
-                    try:
-                        if isinstance(word_info, list) and len(word_info) == 4 and all(isinstance(point, list) and len(point) == 2 for point in word_info):
-                            pass
-                        elif isinstance(word_info, tuple) and len(word_info) == 2 and isinstance(word_info[0], str) and isinstance(word_info[1], (int, float)):
-                            word_text, _ = word_info
-                            paragraph += word_text + " "
-                        else:
-                            print(f"예기치 않은 구조 word_info: {word_info}")
-                    except (TypeError, ValueError) as e:
-                        print(f"처리중 오류 발생 word_info: {e}")
-
-                if paragraph.strip():
-                    text_results.append(paragraph.strip())
-
-            return Response({'text_results': text_results}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
