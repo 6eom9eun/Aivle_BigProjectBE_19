@@ -1,6 +1,5 @@
 from django.urls import path
 from .views import *
-
 urlpatterns = [
     path('user/', UserDetailView.as_view()),
     path('user/update/', UserUpdateView.as_view()),

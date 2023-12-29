@@ -9,9 +9,9 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import UpdateAPIView, RetrieveAPIView
 
 from .serializers import *
+import urllib 
 
 
-<<<<<<< Updated upstream
 from django.conf import settings
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -21,13 +21,17 @@ from json.decoder import JSONDecodeError
 from rest_framework.response import Response
 from dj_rest_auth.registration.views import SocialLoginView
 import requests
+import jwt
+from django.views import View
 from allauth.socialaccount.models import SocialAccount
 from rest_framework.permissions import AllowAny
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
+from .serializers import *
 
 
 import json
+from json.decoder import JSONDecodeError
 from pathlib import Path
 import os
 
@@ -37,13 +41,12 @@ with open(SECRET_BASE_DIR/'secrets.json') as f:
     secrets = json.loads(f.read())
     # SECURITY WARNING: keep the secret key used in production secret!
 KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
-
+KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
+KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
 
 BASE_URL = "http://127.0.0.1:8000/"
-KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
 # ----------------------------------------
 
-=======
 # from django.conf import settings
 # from accounts.models import User
 # from allauth.socialaccount.models import SocialAccount
@@ -53,7 +56,6 @@ KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
 # from django.http import JsonResponse
 # import requests
 # from json.decoder import JSONDecodeError
->>>>>>> Stashed changes
 
 # 회원가입 뷰 : 생성 기능 -> CreateAPIView
 class SignupView(generics.CreateAPIView):
@@ -195,6 +197,10 @@ class OtherUserProfileView(RetrieveAPIView):
 
 
 
+# KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
+# KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
+# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
+
 # ---------- 카카오 로그인 ---------------
 
 @api_view(["GET"])
@@ -202,46 +208,41 @@ class OtherUserProfileView(RetrieveAPIView):
 
 def kakao_login(request):
     return redirect(
-        f"https://kauth.kakao.com/oauth/authorize?client_id={KAKAO_REST_API_KEY}&redirect_uri={KAKAO_CALLBACK_URI}&response_type=code"
+        f"https://kauth.kakao.com/oauth/authorize?client_id={KAKAO_REST_API_KEY}&redirect_uri={KAKAO_REDIRECT_URI}&response_type=code"
     )
-
 
 def kakao_callback(request):
     code = request.GET.get("code")
     print(code)
-    kakao_redirect_uri = KAKAO_CALLBACK_URI
     
     # ---- Access Token Request ----
     token_req = requests.get(
-        f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={KAKAO_REST_API_KEY}&redirect_uri={kakao_redirect_uri}&code={code}"
+        f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={KAKAO_REST_API_KEY}&redirect_uri={KAKAO_REDIRECT_URI}&code={code}"
     )
     token_req_json = token_req.json()
-    error = token_req_json.get("error")
+    error = token_req_json.get("error", None)
     if error is not None:
-        raise JSONDecodeError(error)
+        raise JSONDecodeError("Failed to decode JSON", '{"error": "your_error_message"}', 0)
     access_token = token_req_json.get("access_token")
     print(access_token)
-
-
+    
     # ---- Email Request ----
     profile_request = requests.post(
         "https://kapi.kakao.com/v2/user/me",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     profile_json = profile_request.json()
-    error = profile_json.get("error")
+    error = profile_json.get("error", None)
     if error is not None:
-        raise JSONDecodeError(error)
+        raise JSONDecodeError("Failed to decode JSON", '{"error": "your_error_message"}', 0)
+
     kakao_account = profile_json.get("kakao_account")
-    """
-    kakao_account에서 이메일 외에
-    카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
-    print(kakao_account) 참고
-    """
+    # kakao_account에서 이메일 외에 카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
+    # print(kakao_account) 참고
     print(kakao_account)
-    email = kakao_account.get("email")
-   
-   
+    email = kakao_account.get("email", None)
+    print(email)
+    
     # ---- Signup or Signin Request ----
     try:
         user = User.objects.get(email=email)
@@ -260,10 +261,11 @@ def kakao_callback(request):
             )
         # 기존에 kakao로 가입된 유저
         data = {"access_token": access_token, "code": code}
+        print(data)
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         if accept_status != 200:
-            return JsonResponse({"err_msg": "failed to signin"}, status=accept_status)
+            return JsonResponse({"err_msg": "failed to signin_registered user"}, status=accept_status)
         accept_json = accept.json()
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -279,10 +281,12 @@ def kakao_callback(request):
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
         data = {"access_token": access_token, "code": code}
+        print(data) 
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         if accept_status != 200:
-            return JsonResponse({"err_msg": "failed to signup"}, status=accept_status)
+            print(f"Failed to signup_new user. Status code: {accept_status}")
+            return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
         accept_json = accept.json()
@@ -296,9 +300,13 @@ def kakao_callback(request):
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
+    
+    except JSONDecodeError as e:
+        print(f"JSONDecodeError: {e}")
+        raise
 
 
 class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
-    callback_url = KAKAO_CALLBACK_URI
+    callback_url = KAKAO_REDIRECT_URI
