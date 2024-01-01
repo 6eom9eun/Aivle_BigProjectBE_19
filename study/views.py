@@ -98,7 +98,7 @@ class CompositionView(APIView):
 
     def post(self, request):
         # 사용자는 단어 2개 고르기
-        selected_word_by_user = request.data.get('selected_words', [])
+        selected_word_by_user = json.loads(request.data.get('selected_words', []))
 
         if len(selected_word_by_user) != 2:
             return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
