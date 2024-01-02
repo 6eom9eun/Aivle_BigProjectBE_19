@@ -185,7 +185,7 @@ class OtherUserProfileView(RetrieveAPIView):
 
 # KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 # KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
-# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
+# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI'] # http://127.0.0.1:8000/accounts/kakao/callback/
 
 # ---------- 카카오 로그인 ---------------
 
@@ -208,7 +208,8 @@ def kakao_callback(request):
     token_req_json = token_req.json()
     error = token_req_json.get("error", None)
     if error is not None:
-        raise JSONDecodeError("Failed to decode JSON", '{"error": "your_error_message"}', 0)
+        raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
+
     access_token = token_req_json.get("access_token")
     print(access_token)
     
@@ -233,7 +234,7 @@ def kakao_callback(request):
     try:
         user = User.objects.get(email=email)
         # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
-        # 다른 SNS로 가입된 유저
+        # kakao계정 email이 다른 SNS로 가입된 유저 email과 충돌한다면
         social_user = SocialAccount.objects.get(user=user)
         if social_user is None:
             return JsonResponse(
@@ -247,27 +248,31 @@ def kakao_callback(request):
             )
         # 기존에 kakao로 가입된 유저
         data = {"access_token": access_token, "code": code}
-        print(data)
+        # print(data)
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         if accept_status != 200:
-            return JsonResponse({"err_msg": "failed to signin_registered user"}, status=accept_status)
+            print(f"Accept 응답 상태 코드: {accept.status_code}")
+            # print(f"data : {data}")
+            return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
+        accept_json.pop('user', None)
+        
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         cookie_max_age = 3600 * 24 * 14 # 14 days
         refresh_token = refresh_token[token_index+1]
-        accept_json.pop("user", None)
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
+        print("\n\n\n", response_cookie)
         return response_cookie
     
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
         data = {"access_token": access_token, "code": code}
-        print(data) 
+        # print(data) 
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         if accept_status != 200:
@@ -276,13 +281,13 @@ def kakao_callback(request):
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
         accept_json = accept.json()
+        accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         refresh_token = refresh_token[token_index+1]
 
-        accept_json.pop("user", None)
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
