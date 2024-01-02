@@ -4,10 +4,11 @@ from .models import Post, Comment
           
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username')
+    image = serializers.ReadOnlyField(source = 'profile.image')
     # reply = PostSerializer(read_only=True)
     class Meta:
         model = Comment
-        fields = ['comment_id', 'user', 'reply', 'created_at', 'comment']
+        fields = ['comment_id', 'user', 'image', 'reply', 'created_at', 'comment']
 
 class PostSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
