@@ -32,7 +32,7 @@ class Comment(models.Model): # 해당 글의 댓글 관리
         created_at: 작성일
     """
     user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, default=None)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     comment_id = models.AutoField(primary_key=True) # 기본키
     reply = models.ForeignKey(Post, related_name='comments', null=False, blank=False, on_delete=models.CASCADE)
     comment = models.CharField(max_length=200, blank=True, null=True)
