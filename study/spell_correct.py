@@ -30,7 +30,7 @@ def is_correct(sentence, words):
 
     # 2개 이상 단어가 들어가 있지 않은 경우
     if cnt<2:
-        return {'answer':False, 'text':'현재'+str(cnt)+'개의 단어가 들어가 있습니다. 단어를 추가해주세요.'}
+        return {'answer':False, 'text':'현재 '+str(cnt)+'개의 단어가 들어가 있습니다. 단어를 추가해주세요.'}
 
     # 들어가 있다면 문법적으로 맞는 문장인지 확인하기
     else:
@@ -43,6 +43,6 @@ def is_correct(sentence, words):
         cor_result=tokenizer.decode(corrected_ids.squeeze().tolist(), skip_special_tokens=True)
 
         if cor_result==sentence:
-            return {'answer':True, 'text': sentence+'는 정답입니다.'}
+            return {'answer':True, 'text': '\"'+ sentence+'\"는 올바른 문장입니다.'}
         else:
-            return {'answer':False, 'text': sentence+'는 오답입니다.'+cor_result+'로 수정해주세요.'}
+            return {'answer':False, 'text': '\"'+ sentence+'\"는 교정이 필요한 문장입니다.\n\n\"'+ cor_result + '\"로 수정해 보세요.'}

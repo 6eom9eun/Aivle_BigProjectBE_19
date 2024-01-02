@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from rank.models import Ranking
 
 # 단어, 단어 뜻 테이블
 class Word(models.Model):
@@ -28,6 +29,11 @@ class Quiz(models.Model):
                 self.quiz_id = 1
         super(Quiz, self).save(*args, **kwargs)
         
+        if self.solved_date is not None:
+            user_ranking = Ranking.objects.get(user=self.user)
+            user_ranking.answers += 1
+            user_ranking.save()
+                
     def __str__(self):
         return f"User: {self.user}, Word: {self.word}, Quiz: {self.quiz}, Solved Date: {self.solved_date}, Chat Log: {self.chat_log}, Quiz ID: {self.quiz_id}"
 
