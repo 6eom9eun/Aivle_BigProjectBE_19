@@ -144,19 +144,17 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
             obj = queryset.get(user=self.request.user)
             self.check_object_permissions(self.request, obj)
             return obj
-        except User.DoesNotExist:
-            return Response({'detail': '사용자가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-        except Profile.DoesNotExist:
-            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request, *args, **kwargs):
-        profile_serializer = self.get_serializer(self.get_object())
-
-        return Response({
-            'profile': profile_serializer.data,
-        }, status=status.HTTP_200_OK)
+        try:
+            profile_serializer = self.get_serializer(self.get_object())
+            return Response({'profile': profile_serializer.data}, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # 다른 사용자 프로필 확인
@@ -167,33 +165,22 @@ class OtherUserProfileView(RetrieveAPIView):
 
     def get_object(self):
         try:
-            # URL 매개변수에서 user_id 가져오기
             user_id = self.kwargs.get('user_id')
-            
-            # 지정된 user_id를 가진 사용자 검색
             user = User.objects.get(id=user_id)
-            
-            # 해당 사용자와 관련된 프로필 검색
             profile = Profile.objects.get(user=user)
-            
-            # 권한 확인 (선택 사항)
             self.check_object_permissions(self.request, profile)
-            
             return profile
-        except User.DoesNotExist:
-            return Response({'detail': '사용자가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
-        except Profile.DoesNotExist:
-            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request, *args, **kwargs):
-        profile_serializer = self.get_serializer(self.get_object())
-
-        return Response({
-            'profile': profile_serializer.data,
-        }, status=status.HTTP_200_OK)
-
+        try:
+            profile_serializer = self.get_serializer(self.get_object())
+            return Response({'profile': profile_serializer.data}, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response({'detail': '프로필이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
