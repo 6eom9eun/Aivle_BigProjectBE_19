@@ -1,22 +1,16 @@
 # board > serializers.py
 from rest_framework import serializers
 from .models import Post, Comment
-from django.contrib.auth.models import User
-
+          
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
-    image = serializers.SerializerMethodField()
+    image = serializers.ReadOnlyField(source='profile.image.url') # 이미지가 경로 url 이면 .url 붙여야 됨.
 
     class Meta:
         model = Comment
         fields = ['comment_id', 'user', 'image', 'reply', 'created_at', 'comment']
         read_only_fields = ['reply']
         
-    def get_image(self, obj):
-        profile = User.objects.get(username=obj.user.username).profile
-        image_url = f'http://localhost:8000{profile.image.url}'
-        return image_url
-    
 class PostSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
     class Meta:
