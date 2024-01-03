@@ -207,7 +207,7 @@ class TextToSpeechView(APIView):
             tts = gTTS(text=text, lang="ko", slow=False)
             
             # 임시 파일로 저장 = 데이터가 쌓이지 않음
-            mp3_file_path = "/tmp/speech.mp3"
+            mp3_file_path = "study/tmp/speech.mp3"
             tts.save(mp3_file_path)
 
             # 브라우저로 음성 파일을 전송
