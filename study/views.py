@@ -59,6 +59,21 @@ class RandomQuizView(APIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class MakeSentenceView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        try:
+            word = request.data.get('word', '')
+            meaning = request.data.get('meaning', '')
+
+            response = make_sentence(word, meaning)
+
+            return JsonResponse(response, status=status.HTTP_200_OK)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 # 퀴즈 리스트 뷰       
 class QuizListView(APIView):
     authentication_classes = [TokenAuthentication]

@@ -13,6 +13,8 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from django.shortcuts import get_object_or_404, get_list_or_404
 
+from accounts.models import Profile
+
 # Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
 class PostViewSet(generics.ListCreateAPIView):
     queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
@@ -52,6 +54,8 @@ class CommentViewSet(generics.ListCreateAPIView):
             post_pk = self.kwargs.get("post_id")
             post = get_object_or_404(Post, pk=post_pk)
             serializer.save(user=self.request.user, reply=post)
+            user_profile = Profile.objects.get(user=self.request.user)
+            serializer.save(profile=user_profile)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         

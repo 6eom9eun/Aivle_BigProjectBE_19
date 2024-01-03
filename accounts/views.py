@@ -14,6 +14,7 @@ import urllib
 
 from django.conf import settings
 from allauth.socialaccount.providers.kakao import views as kakao_view
+from allauth.socialaccount.providers.google import views as google_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from rest_framework.decorators import api_view, permission_classes
 from django.http import JsonResponse
@@ -28,6 +29,7 @@ from rest_framework.permissions import AllowAny
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from .serializers import *
+from accounts.models import User
 
 
 import json
@@ -43,18 +45,13 @@ with open(SECRET_BASE_DIR/'secrets.json') as f:
 KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
 KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
+Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
+SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
 
 BASE_URL = "http://127.0.0.1:8000/"
+KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
+GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/callback/"
 # ----------------------------------------
-# from django.conf import settings
-# from accounts.models import User
-# from allauth.socialaccount.models import SocialAccount
-# from dj_rest_auth.registration.views import SocialLoginView
-# from allauth.socialaccount.providers.google import views as google_view
-# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-# from django.http import JsonResponse
-# import requests
-# from json.decoder import JSONDecodeError
 
 # 회원가입 뷰 : 생성 기능 -> CreateAPIView
 class SignupView(generics.CreateAPIView):
@@ -324,4 +321,119 @@ def kakao_callback(request):
 class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
-    callback_url = KAKAO_REDIRECT_URI
+    callback_url = KAKAO_CALLBACK_URI
+    
+    
+    
+#------------------Google Login--------------------------------
+import logging
+state = secrets['STATE']
+def google_login(request):
+    scope = "https://www.googleapis.com/auth/userinfo.email"
+    client_id = SOCIAL_AUTH_GOOGLE_CLIENT_ID
+    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
+
+
+def google_callback(request):
+    
+    client_id = SOCIAL_AUTH_GOOGLE_CLIENT_ID
+    client_secret = Google_API_KEY
+    code = request.GET.get("code")
+    google_callback_uri=GOOGLE_CALLBACK_URI
+    
+    
+    # 1. 받은 코드로 구글에 access token 요청
+    token_req = requests.post(f"https://oauth2.googleapis.com/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={google_callback_uri}&state={state}")
+
+    ### 1-1. json으로 변환 & 에러 부분 파싱
+    token_req_json = token_req.json()
+    error = token_req_json.get("error")
+
+    ### 1-2. 에러 발생 시 종료
+    if error is not None:
+        raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
+
+
+    ### 1-3. 성공 시 access_token 가져오기
+    access_token = token_req_json.get('access_token')
+
+    #################################################################
+
+    # 2. 가져온 access_token으로 이메일값을 구글에 요청
+    email_req = requests.get(f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}&state={state}")
+    email_req_status = email_req.status_code
+
+    ### 2-1. 에러 발생 시 400 에러 반환
+    if email_req_status != 200:
+        return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    ### 2-2. 성공 시 이메일 가져오기
+    email_req_json = email_req.json()
+    email = email_req_json.get('email')
+
+    # return JsonResponse({'access': access_token, 'email':email})
+
+    #################################################################
+
+ # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
+    try:
+        user = User.objects.get(email=email)
+        
+        # 기존에 가입된 유저의 Provider가 google가 아니면 에러 발생, 맞으면 로그인
+        # 다른 SNS로 가입된 유저
+        social_user = SocialAccount.objects.get(user=user)
+        if social_user is None:
+            return JsonResponse(
+                {"err_msg": "email exists but not social user"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if social_user.provider != "google":
+            return JsonResponse(
+                {"err_msg": "no matching social type"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # 기존에 google로 가입된 유저
+        data = {"access_token": access_token, "code": code}
+        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+        accept_status = accept.status_code
+        if accept_status != 200:
+            return JsonResponse({"err_msg": "failed to signin"}, status=accept_status)
+        accept_json = accept.json()
+        accept_json.pop('user',None)
+        # refresh_token을 headers 문자열에서 추출함
+        refresh_token = accept.headers['Set-Cookie']
+        refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
+        token_index = refresh_token.index(' refresh_token')
+        cookie_max_age = 3600 * 24 * 14 # 14 days
+        refresh_token = refresh_token[token_index+1]
+        response_cookie = JsonResponse(accept_json)
+        response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
+        print("\n\n\n", response_cookie)
+        return response_cookie
+    
+    except User.DoesNotExist:
+        # 기존에 가입된 유저가 없으면 새로 가입
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+        accept_status = accept.status_code
+        if accept_status != 200:
+            print(f"Failed to signup_new user. Status code: {accept_status}")
+            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
+            
+        accept_json = accept.json()
+        accept_json.pop('user',None)
+        # refresh_token을 headers 문자열에서 추출함
+        refresh_token = accept.headers['Set-Cookie']
+        refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
+        token_index = refresh_token.index(' refresh_token')
+        refresh_token = refresh_token[token_index+1]
+        response_cookie = JsonResponse(accept_json)
+        response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
+        
+        return response_cookie
+
+    
+class GoogleLogin(SocialLoginView):
+    adapter_class = google_view.GoogleOAuth2Adapter
+    callback_url = GOOGLE_CALLBACK_URI
+    client_class = OAuth2Client
