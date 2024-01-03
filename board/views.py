@@ -17,13 +17,17 @@ from accounts.models import Profile
 
 # Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
 class PostViewSet(generics.ListCreateAPIView):
-    queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
-    serializer_class = PostSerializer
+    queryset = Post.objects.all().order_by('-created_at')
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly] # 비인증 요청에 대해서는 읽기만 허용
+    permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['user', 'published_at']
-    
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return PostCreateSerializer
+        return PostSerializer
+
     def perform_create(self, serializer):
         try:
             serializer.save(user=self.request.user)
