@@ -189,6 +189,10 @@ class OtherUserProfileView(RetrieveAPIView):
 
 # ---------- 카카오 로그인 ---------------
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 
@@ -199,19 +203,22 @@ def kakao_login(request):
 
 def kakao_callback(request):
     code = request.GET.get("code")
-    print(code)
+    # print(code)
     
     # ---- Access Token Request ----
     token_req = requests.get(
         f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={KAKAO_REST_API_KEY}&redirect_uri={KAKAO_REDIRECT_URI}&code={code}"
     )
     token_req_json = token_req.json()
+    
+    print(f"Access Token 요청 결과: {token_req_json}")
+    
     error = token_req_json.get("error", None)
     if error is not None:
         raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
 
     access_token = token_req_json.get("access_token")
-    print(access_token)
+    # print(access_token)
     
     # ---- Email Request ----
     profile_request = requests.post(
@@ -219,6 +226,9 @@ def kakao_callback(request):
         headers={"Authorization": f"Bearer {access_token}"},
     )
     profile_json = profile_request.json()
+    
+    print(f"Kakao Profile 요청 결과: {profile_json}")
+    
     error = profile_json.get("error", None)
     if error is not None:
         raise JSONDecodeError("Failed to decode JSON", '{"error": "your_error_message"}', 0)
@@ -226,21 +236,18 @@ def kakao_callback(request):
     kakao_account = profile_json.get("kakao_account")
     # kakao_account에서 이메일 외에 카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
     # print(kakao_account) 참고
-    print(kakao_account)
+    # print(kakao_account)
     email = kakao_account.get("email", None)
-    print(email)
+    profile = kakao_account.get("profile")
+    nickname = profile.get("nickname")
+    profile_image = profile.get("thumbnail_image_url")
+    # print(email)
     
     # ---- Signup or Signin Request ----
     try:
         user = User.objects.get(email=email)
         # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
-        # kakao계정 email이 다른 SNS로 가입된 유저 email과 충돌한다면
         social_user = SocialAccount.objects.get(user=user)
-        if social_user is None:
-            return JsonResponse(
-                {"err_msg": "email exists but not social user"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         if social_user.provider != "kakao":
             return JsonResponse(
                 {"err_msg": "no matching social type"},
@@ -248,7 +255,6 @@ def kakao_callback(request):
             )
         # 기존에 kakao로 가입된 유저
         data = {"access_token": access_token, "code": code}
-        # print(data)
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         if accept_status != 200:
@@ -256,6 +262,9 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
+        
+        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        
         accept_json.pop('user', None)
         
         # refresh_token을 headers 문자열에서 추출함
@@ -281,6 +290,9 @@ def kakao_callback(request):
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
         accept_json = accept.json()
+        
+        print(f"신규 Kakao 가입 유저 GET: {accept_json}")
+        
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -295,7 +307,19 @@ def kakao_callback(request):
     except JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         raise
-
+    
+    except User.MultipleObjectsReturned as e:
+        logger.error(f"MultipleObjectsReturned: {e}")
+        return JsonResponse(
+            {"err_msg": "MultipleObjectsReturned. Check logs for details."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+        
+    except SocialAccount.DoesNotExist:
+    	# User는 있는데 SocialAccount가 없을 때 (=일반회원으로 가입된 이메일일때)
+        return JsonResponse(
+            {'err_msg': 'email exists but not social user'}, 
+            status=status.HTTP_400_BAD_REQUEST)
 
 class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
