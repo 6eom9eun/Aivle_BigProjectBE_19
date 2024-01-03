@@ -187,7 +187,7 @@ class OcrView(APIView):
                     if paragraph.strip():
                         text_results.append(paragraph.strip())
 
-                return Response({'text_results': text_results}, status=status.HTTP_201_CREATED)
+                return JsonResponse({'text_results': text_results}, status=status.HTTP_201_CREATED)
             else:
                 raise ValidationError("이미지가 없습니다.")
         except Exception as e:
