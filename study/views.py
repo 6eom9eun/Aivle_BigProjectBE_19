@@ -6,7 +6,7 @@ from .new_gpt import *
 from .text_speech import *
 from .spell_correct import *
 from .serializers import *
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
@@ -211,9 +211,9 @@ class TextToSpeechView(APIView):
             tts.save(mp3_file_path)
 
             # 브라우저로 음성 파일을 전송
-            with open(mp3_file_path, 'rb') as file:
-                response = HttpResponse(file.read(), content_type='audio/mpeg')
-                response['Content-Disposition'] = 'inline; filename=speech.mp3'
+            response = FileResponse(open(mp3_file_path, 'rb'))
+            response['Content-Type'] = 'audio/mp3'
+            response['Content-Disposition'] = 'inline; filename=speech.mp3'
             
             return response
         except Exception as e:
