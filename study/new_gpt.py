@@ -18,76 +18,31 @@ with open(BASE_DIR/'secrets.json') as f:
 
 os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 
-class JsonOutputParser(BaseOutputParser):
-    def parse(self, text):
-        text = text.replace("```", "").replace("json", "")
-        return json.loads(text)
-
 # GPT AI를 활용한 문장 생성하기
 def make_sentence(word, meaning):
-    # 파인튜닝 모델
+    sentence_prompt = ChatPromptTemplate.from_messages([("system", """ Make one sentence using '{word}'""",)])
+    sentence_parser = CommaSeparatedListOutputParser()
+
     llm = ChatOpenAI(
-        temperature=0.1,
-        #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
+        temperature=1,
+        # model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
+        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn"
         model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
     )
-    
-    # JSON 파서 가져오기
-    output_parser = JsonOutputParser()
 
-    # 문장을 만들어 줄 프롬프트
-    sentence_prompt = ChatPromptTemplate.from_messages([("system", """ Make 3 sentence using '{word}'""",)])
-    
-    # 체인 연결하기
-    sentences_chain = sentence_prompt | llm
-    
-    # JSON 형식 변경 프롬프트
-    formatting_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-        "system",
-        """
-            You are a powerful formatting algorithm.
+    sentence_chain = sentence_prompt | llm | sentence_parser
 
-            You format questions into JSON format.
+    # 문장 만들기
+    temp=sentence_chain.invoke({"word":word})
+    sentence=temp[0]
 
-            You must follow this examples.
+    result = {
+        "sentence": sentence
+    }
 
-            Example Input:
-
-            심심한 마음을 달래기 위해 책을 읽으며 시간을 보내고 있다. / 나는 심심한 마음을 달래기 위해 우리 가족과 함께 영화를 보았다. / 그는 심심한 마음을 달래기 위해 사무실에서 일하다가도 가끔씩 창밖을 내다보곤 한다.
-
-            Example Output:
-
-            ```json
-            {{ "sentences": [
-                    {{ text: [
-                        "심심한 마음을 달래기 위해 책을 읽으며 시간을 보내고 있다.",
-                        "나는 심심한 마음을 달래기 위해 우리 가족과 함께 영화를 보았다.",
-                        "그는 심심한 마음을 달래기 위해 사무실에서 일하다가도 가끔씩 창밖을 내다보곤 한다."]
-                    }},
-                ]
-            }}
-            ```
-            Your turn!
-
-            Questions: {context}
-        """,
-        )
-    ])
-    
-    # JSON 포멧으로 변환하는 모듈 생성
-    formatting_chain = formatting_prompt | llm
-    
-    # 최종 체인 산출
-    chain = {"context": sentences_chain} | formatting_chain | output_parser
-    
-    response=chain.invoke({"word":word, "meaning":meaning})
-    
-    return response
-
+    return result
     
 
 # 문제 만들기
@@ -96,6 +51,7 @@ def make_problem(word, meaning):
     llm = ChatOpenAI(
         temperature=0.1,
         #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
+        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn"
         model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],

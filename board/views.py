@@ -4,14 +4,16 @@ from board.serializers import PostSerializer, PostCreateSerializer, PostDetailSe
 from .permissions import CustomReadOnly, IsOwnerOrReadOnly
 from .models import Post, Comment
 
-from rest_framework import viewsets
-from rest_framework import generics
+from rest_framework import viewsets, generics, status
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from django.shortcuts import get_object_or_404, get_list_or_404
+
+from accounts.models import Profile
 
 # Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
 class PostViewSet(generics.ListCreateAPIView):
@@ -23,7 +25,10 @@ class PostViewSet(generics.ListCreateAPIView):
     filterset_fields = ['user', 'published_at']
     
     def perform_create(self, serializer):
-        serializer.save(user = self.request.user)
+        try:
+            serializer.save(user=self.request.user)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
@@ -45,9 +50,14 @@ class CommentViewSet(generics.ListCreateAPIView):
         return Comment.objects.filter(reply__post_id=post_pk).order_by('-created_at')
 
     def perform_create(self, serializer):
-        post_pk = self.kwargs.get("post_id")
-        post = get_object_or_404(Post, pk=post_pk)
-        serializer.save(user=self.request.user, reply=post)
+        try:
+            post_pk = self.kwargs.get("post_id")
+            post = get_object_or_404(Post, pk=post_pk)
+            serializer.save(user=self.request.user, reply=post)
+            user_profile = Profile.objects.get(user=self.request.user)
+            serializer.save(profile=user_profile)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 # (댓글) Comment 조회, 수정, 삭제     
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):

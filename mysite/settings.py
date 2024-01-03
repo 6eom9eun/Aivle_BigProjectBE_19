@@ -31,7 +31,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -95,6 +94,16 @@ REST_AUTH = {
     'JWT_AUTH_SAMESITE': 'Lax',
     'JWT_AUTH_COOKIE_USE_CSRF' : False,
     'SESSION_LOGIN' : False
+}
+
+SOCIALACCOUNT_PROVIDERS = {
+    'kakao': {
+        'APP': {
+            'client_id': '1015386',
+            'secret': '95156524fab47363fd3892d18d4697d2',
+        }
+    },
+    # 다른 소셜 로그인 제공자 설정도 추가할 수 있음
 }
 
 from datetime import timedelta

@@ -23,23 +23,24 @@ os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 from IPython.display import Audio, display
 from whisper_jax import FlaxWhisperPipline
 import jax.numpy as jnp
+from django.http import HttpResponse
 
-# 텍스트를 음성으로 변환(TTS)
-def Text_To_Speech(sentence):
-    # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
-    json_file_path = ".../ocr_results.json"
+# # 텍스트를 음성으로 변환(TTS)
+# def Text_To_Speech(sentence):
+#     # JSON 파일에서 OCR 결과 로드(결과 파일 경로 입력)
+#     json_file_path = ".../ocr_results.json"
 
-    #지정된 경로로 json 파일 로드
-    with open(json_file_path, "r", encoding="utf-8") as json_file:
-        ocr_results = json.load(json_file)
+#     #지정된 경로로 json 파일 로드
+#     with open(json_file_path, "r", encoding="utf-8") as json_file:
+#         ocr_results = json.load(json_file)
     
-    # 단락을 음성으로 변환 후 저장
-    for i, paragraph in enumerate(ocr_results, start=1):
-    # 언어 설정(기본 값은 'en', 한국어는 'ko')
-        tts = gTTS(text=paragraph, lang="ko",slow=False)
-        mp3_file_path = f".../speech_{i}.wav"     #(음성 파일 결과 경로 입력)
-    # 음성 파일로 저장
-        tts.save(mp3_file_path)
+#     # 단락을 음성으로 변환 후 저장
+#     for i, paragraph in enumerate(ocr_results, start=1):
+#     # 언어 설정(기본 값은 'en', 한국어는 'ko')
+#         tts = gTTS(text=paragraph, lang="ko",slow=False)
+#         mp3_file_path = f".../speech_{i}.wav"     #(음성 파일 결과 경로 입력)
+#     # 음성 파일로 저장
+#         tts.save(mp3_file_path)
     
 
 # 음성을 텍스트로 변환(STT)
@@ -48,15 +49,16 @@ def flush():
   gc.collect()           # 파이썬 가비지 컬렉션을 수행하여 메모리를 정리합니다.
   torch.cuda.empty_cache() # PyTorch의 CUDA 캐시를 비웁니다
 
+import librosa
+
 def Speech_To_Text(file_path):
-    client=OpenAI()
-    
-    audio_file=open(file_path,'rb')
+    client = OpenAI()
+
+    audio_data, _ = librosa.load(file_path, sr=16000)
 
     pipeline = FlaxWhisperPipline("openai/whisper-small", dtype=jnp.float16)
-    transcript = pipeline(audio_file, return_timestamps=True) # small 모델, jnp.float16 데이터 타입 사용
-    # transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
-    
+    transcript = pipeline(audio_data, return_timestamps=True)
+
     return transcript
 
 # 텍스트를 음성으로 변환
