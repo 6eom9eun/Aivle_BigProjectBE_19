@@ -231,7 +231,7 @@ class SpeechToTextView(APIView):
                 return Response({"error": "오디오파일 받지않았음."}, status=400)
 
             # 오디오 파일을 임시로 저장 = 데이터가 쌓이지 않음
-            audio_file_path = "/tmp/audio.wav"
+            audio_file_path = "study/tmp/audio.wav"
             with open(audio_file_path, 'wb') as file:
                 for chunk in audio_file.chunks():
                     file.write(chunk)
