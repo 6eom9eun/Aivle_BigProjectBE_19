@@ -6,7 +6,7 @@ from .new_gpt import *
 from .text_speech import *
 from .spell_correct import *
 from .serializers import *
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
@@ -207,13 +207,13 @@ class TextToSpeechView(APIView):
             tts = gTTS(text=text, lang="ko", slow=False)
             
             # 임시 파일로 저장 = 데이터가 쌓이지 않음
-            mp3_file_path = "/tmp/speech.mp3"
+            mp3_file_path = "study/tmp/speech.mp3"
             tts.save(mp3_file_path)
 
             # 브라우저로 음성 파일을 전송
-            with open(mp3_file_path, 'rb') as file:
-                response = HttpResponse(file.read(), content_type='audio/mpeg')
-                response['Content-Disposition'] = 'inline; filename=speech.mp3'
+            response = FileResponse(open(mp3_file_path, 'rb'))
+            response['Content-Type'] = 'audio/mp3'
+            response['Content-Disposition'] = 'inline; filename=speech.mp3'
             
             return response
         except Exception as e:
@@ -231,7 +231,7 @@ class SpeechToTextView(APIView):
                 return Response({"error": "오디오파일 받지않았음."}, status=400)
 
             # 오디오 파일을 임시로 저장 = 데이터가 쌓이지 않음
-            audio_file_path = "/tmp/audio.wav"
+            audio_file_path = "study/tmp/audio.wav"
             with open(audio_file_path, 'wb') as file:
                 for chunk in audio_file.chunks():
                     file.write(chunk)
