@@ -10,6 +10,7 @@ import openai
 import os
 import json
 from .models import Word, Quiz
+import re
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,10 +38,13 @@ def make_sentence(word, meaning):
     # 문장 만들기
     temp=sentence_chain.invoke({"word":word})
     sentence=temp[0]
+    # 특수문자 제거
+    sentence = re.sub('[,\.]', '', sentence)
 
     result = {
         "sentence": sentence
     }
+    
 
     return result
     
@@ -71,7 +75,10 @@ def make_problem(word, meaning):
     
     # 문장 만들기
     temp=sent_chain.invoke({"word":word})
-    result['sentence']=temp[0]
+    sentence=temp[0]
+    # 특수문자 제거
+    sentence = re.sub('[,\.]', '', sentence)
+    result['sentence'] = sentence
     
     # 문제 만들기
     result['question']=f"위 문장에서 '{word}'가 의미하는 바는 무엇인가요?"
