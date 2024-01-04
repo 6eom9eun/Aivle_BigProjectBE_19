@@ -235,10 +235,12 @@ class SpeechToTextView(APIView):
             with open(audio_file_path, 'wb') as file:
                 for chunk in audio_file.chunks():
                     file.write(chunk)
-            
+        
             # 음성을 텍스트로 변환
             transcript = Speech_To_Text(audio_file_path)
+            print(transcript)
             
-            return Response({"text": transcript.get('text', '')}, status=status.HTTP_200_OK)
+            # return Response({"text": transcript.get('text', '')}, status=status.HTTP_200_OK)
+            return Response({"text": transcript}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

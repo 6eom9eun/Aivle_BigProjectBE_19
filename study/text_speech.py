@@ -45,21 +45,22 @@ from django.http import HttpResponse
 
 # 음성을 텍스트로 변환(STT)
 
-def flush():
-  gc.collect()           # 파이썬 가비지 컬렉션을 수행하여 메모리를 정리합니다.
-  torch.cuda.empty_cache() # PyTorch의 CUDA 캐시를 비웁니다
 
-import librosa
+# def flush():
+#   gc.collect()           # 파이썬 가비지 컬렉션을 수행하여 메모리를 정리합니다.
+#   torch.cuda.empty_cache() # PyTorch의 CUDA 캐시를 비웁니다
 
-def Speech_To_Text(file_path):
-    client = OpenAI()
+# import librosa
 
-    audio_data, _ = librosa.load(file_path, sr=16000)
+# def Speech_To_Text(file_path):
+#     client = OpenAI()
 
-    pipeline = FlaxWhisperPipline("openai/whisper-small", dtype=jnp.float16)
-    transcript = pipeline(audio_data, return_timestamps=True)
+#     audio_data, _ = librosa.load(file_path, sr=16000)
 
-    return transcript
+#     pipeline = FlaxWhisperPipline("openai/whisper-small", dtype=jnp.float16)
+#     transcript = pipeline(audio_data, return_timestamps=True)
+
+#     return transcript
 
 # 텍스트를 음성으로 변환
 # def Text_TO_Speech(sentence):
@@ -76,12 +77,13 @@ def Speech_To_Text(file_path):
 #     tts.save("output.mp3")
     
 
-# # 음성을 텍스트로 변환
-# def Speech_To_Text(file_path):
-#     client=OpenAI()
+# 음성을 텍스트로 변환
+def Speech_To_Text(file_path):
+    client=OpenAI()
     
-#     audio_file=open(file_path,'rb')
+    audio_file=open(file_path,'rb')
     
-#     transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
+    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file).text
+    print(transcript)
     
-#     return transcript
+    return transcript
