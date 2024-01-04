@@ -2,7 +2,7 @@
 from django.urls import is_valid_path
 from board.serializers import PostSerializer, PostCreateSerializer, PostDetailSerializer, CommentSerializer
 from .permissions import CustomReadOnly, IsOwnerOrReadOnly
-from .models import Post, Comment
+from .models import Post, Comment, Image
 
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
@@ -12,6 +12,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from django.shortcuts import get_object_or_404, get_list_or_404
+from rest_framework.decorators import api_view
 
 from accounts.models import Profile
 
@@ -70,3 +71,16 @@ class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     lookup_url_kwarg = 'comment_id'
     queryset = Comment.objects.all()
+    
+
+@api_view(['POST'])
+def image_upload(request):
+    if request.method == 'POST':
+        image_file = request.FILES.get('image')
+        if image_file:
+            new_image = Image.objects.create(image=image_file)
+            image_url = new_image.image.url
+            response_data = {'image_url': image_url}
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'error': 'No image file'}, status=status.HTTP_400_BAD_REQUEST)

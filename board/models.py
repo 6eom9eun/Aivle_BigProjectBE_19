@@ -22,6 +22,9 @@ class Post(models.Model):
     def publish(self):
         self.published_at = timezone.now()
         self.save()
+
+class Image(models.Model):
+    image = models.ImageField(upload_to='uploads/%Y/%m/%d/', blank=True, null=True)
         
 class Comment(models.Model): # 해당 글의 댓글 관리
     """
