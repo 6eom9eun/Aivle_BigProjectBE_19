@@ -30,6 +30,7 @@ from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from .serializers import *
 from accounts.models import User
+from django.db import IntegrityError, transaction
 
 
 import json
@@ -262,7 +263,6 @@ def kakao_callback(request):
         accept_json = accept.json()
         # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
-        
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
@@ -287,7 +287,7 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
-        accept_json = accept.json()        
+        accept_json = accept.json()   
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
