@@ -196,19 +196,20 @@ def kakao_login(request):
 
 def kakao_callback(request):
     code = request.GET.get("code")
-    print(code)
+    # print(code)
     
     # ---- Access Token Request ----
     token_req = requests.get(
         f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={KAKAO_REST_API_KEY}&redirect_uri={KAKAO_REDIRECT_URI}&code={code}"
     )
     token_req_json = token_req.json()
+    # print(f"Access Token 요청 결과: {token_req_json}")
     error = token_req_json.get("error", None)
     if error is not None:
         raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
 
     access_token = token_req_json.get("access_token")
-    print(access_token)
+    # print(access_token)
     
     # ---- Email Request ----
     profile_request = requests.post(
@@ -216,6 +217,7 @@ def kakao_callback(request):
         headers={"Authorization": f"Bearer {access_token}"},
     )
     profile_json = profile_request.json()
+    # print(f"Kakao Profile 요청 결과: {profile_json}")
     error = profile_json.get("error", None)
     if error is not None:
         raise JSONDecodeError("Failed to decode JSON", '{"error": "your_error_message"}', 0)
@@ -223,9 +225,12 @@ def kakao_callback(request):
     kakao_account = profile_json.get("kakao_account")
     # kakao_account에서 이메일 외에 카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
     # print(kakao_account) 참고
-    print(kakao_account)
+    # print(kakao_account)
     email = kakao_account.get("email", None)
-    print(email)
+    profile = kakao_account.get("profile")
+    nickname = profile.get("nickname")
+    profile_image = profile.get("thumbnail_image_url")
+    # print(email)
     
     # ---- Signup or Signin Request ----
     try:
@@ -243,16 +248,22 @@ def kakao_callback(request):
                 {"err_msg": "no matching social type"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+            
         # 기존에 kakao로 가입된 유저
+        print("===== 기존 Kakao 유저 로그인 =====")
         data = {"access_token": access_token, "code": code}
         # print(data)
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
+        
         if accept_status != 200:
             print(f"Accept 응답 상태 코드: {accept.status_code}")
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
+        
+        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        
         accept_json.pop('user', None)
         
         # refresh_token을 headers 문자열에서 추출함
@@ -263,21 +274,23 @@ def kakao_callback(request):
         refresh_token = refresh_token[token_index+1]
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
-        print("\n\n\n", response_cookie)
         return response_cookie
     
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
+        cookie_max_age = 3600 * 24 * 14 # 로그인한 상태를 14일 동안 유지
+        # print(email)
         data = {"access_token": access_token, "code": code}
         # print(data) 
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
+        print("===== 신규 Kakao 가입 =====")
         if accept_status != 200:
             print(f"Failed to signup_new user. Status code: {accept_status}")
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
-        accept_json = accept.json()
+        accept_json = accept.json()        
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -292,12 +305,21 @@ def kakao_callback(request):
     except JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
         raise
-
+    
+    except User.MultipleObjectsReturned as e:
+        print(f"MultipleObjectsReturned: {e}")
+        return JsonResponse(
+            {"err_msg": "MultipleObjectsReturned. Check logs for details."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    
+    except:
+        return JsonResponse({"MESSAGE":"KEY_ERROR"}, status=400)
 
 class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
-    callback_url = KAKAO_CALLBACK_URI
+    callback_url = KAKAO_REDIRECT_URI
     
     
     

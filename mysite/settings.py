@@ -25,6 +25,8 @@ with open(BASE_DIR/'secrets.json') as f:
     
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = secrets['SECRET_KEY']
+KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
+KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -99,8 +101,8 @@ REST_AUTH = {
 SOCIALACCOUNT_PROVIDERS = {
     'kakao': {
         'APP': {
-            'client_id': '1015386',
-            'secret': '95156524fab47363fd3892d18d4697d2',
+            'client_id': KAKAO_SECRET_KEY,
+            'secret': KAKAO_REST_API_KEY,
         }
     },
     # 다른 소셜 로그인 제공자 설정도 추가할 수 있음
