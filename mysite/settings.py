@@ -105,6 +105,12 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret': KAKAO_REST_API_KEY,
         }
     },
+    'google': {
+        'APP':{
+            'clinet_id':secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID'],
+            'secret': secrets['SOCIAL_AUTH_GOOGLE_SECRET']
+            },
+    }
     # 다른 소셜 로그인 제공자 설정도 추가할 수 있음
 }
 

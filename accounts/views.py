@@ -30,6 +30,7 @@ from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from .serializers import *
 from accounts.models import User
+from django.db import IntegrityError, transaction
 
 
 import json
@@ -196,7 +197,7 @@ def kakao_login(request):
 
 def kakao_callback(request):
     code = request.GET.get("code")
-    # print(code)
+    print(code)
     
     # ---- Access Token Request ----
     token_req = requests.get(
@@ -209,7 +210,7 @@ def kakao_callback(request):
         raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
 
     access_token = token_req_json.get("access_token")
-    # print(access_token)
+    print(access_token)
     
     # ---- Email Request ----
     profile_request = requests.post(
@@ -224,7 +225,6 @@ def kakao_callback(request):
 
     kakao_account = profile_json.get("kakao_account")
     # kakao_account에서 이메일 외에 카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
-    # print(kakao_account) 참고
     # print(kakao_account)
     email = kakao_account.get("email", None)
     profile = kakao_account.get("profile")
@@ -261,11 +261,8 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        
-        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
-        
+        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
-        
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
@@ -290,7 +287,7 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
-        accept_json = accept.json()        
+        accept_json = accept.json()   
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
