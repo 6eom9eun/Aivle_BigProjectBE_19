@@ -15,7 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
     class Meta:
         model = Post
-        fields = ['post_id', 'user', 'title', 'created_at']
+        fields = ['post_id', 'user', 'title', 'created_at', 'image']
 
 class PostDetailSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
