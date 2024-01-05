@@ -21,13 +21,13 @@ os.environ['OPENAI_API_KEY']= secrets['OPENAI_API_KEY']
 
 # GPT AI를 활용한 문장 생성하기
 def make_sentence(word, meaning):
-    sentence_prompt = ChatPromptTemplate.from_messages([("system", """ Make one sentence using '{word}'""",)])
+    sentence_prompt = ChatPromptTemplate.from_messages([("system", """ Make one sentence using '{word}' and only korean.""",)])
     sentence_parser = CommaSeparatedListOutputParser()
 
     llm = ChatOpenAI(
         temperature=1,
         # model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
-        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn"
+        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn",
         model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
@@ -37,9 +37,10 @@ def make_sentence(word, meaning):
 
     # 문장 만들기
     temp=sentence_chain.invoke({"word":word})
+    # ','으로 끊어지는 문제 해결    
     sentence=temp[0]
-    # 특수문자 제거
-    sentence = re.sub('[,\.]', '', sentence)
+    for i in range(1,len(temp)):
+        sentence+=(', '+temp[i])
 
     result = {
         "sentence": sentence
@@ -55,14 +56,14 @@ def make_problem(word, meaning):
     llm = ChatOpenAI(
         temperature=0.1,
         #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
-        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn"
+        #model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn",
         model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
     )
     
     # 문장 생성 프롬프트(1개 생성)
-    sent_prompt = ChatPromptTemplate.from_messages([("system", """ Make one sentence using '{word}'""",)])
+    sent_prompt = ChatPromptTemplate.from_messages([("system", """ Make one sentence using '{word}' and only korean.""",)])
     
     # 생성된 문장 List로 변환
     sentence_parser = CommaSeparatedListOutputParser()
@@ -75,9 +76,11 @@ def make_problem(word, meaning):
     
     # 문장 만들기
     temp=sent_chain.invoke({"word":word})
+    
+    # ','으로 끊어지는 문제 해결
     sentence=temp[0]
-    # 특수문자 제거
-    sentence = re.sub('[,\.]', '', sentence)
+    for i in range(1,len(temp)):
+        sentence+=(', '+temp[i])
     result['sentence'] = sentence
     
     # 문제 만들기

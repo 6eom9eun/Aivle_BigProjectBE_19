@@ -9,7 +9,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-        with open(os.path.join(BASE_DIR, 'words.csv'), 'r', encoding='utf-8') as file:
+        with open(os.path.join(BASE_DIR, 'clear_words.csv'), 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             for row in reader:
                 Word.objects.create(word=row[0], meaning=row[1])
