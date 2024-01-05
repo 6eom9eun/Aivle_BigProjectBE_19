@@ -183,7 +183,7 @@ def kakao_login(request):
 
 def kakao_callback(request):
     code = request.GET.get("code")
-    print(code)
+    print(f"code : {code}")
     
     # ---- Access Token Request ----
     token_req = requests.get(
@@ -196,7 +196,7 @@ def kakao_callback(request):
         raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
 
     access_token = token_req_json.get("access_token")
-    print(access_token)
+    print(f"access_token : {access_token}")
     
     # ---- Email Request ----
     profile_request = requests.post(
@@ -247,7 +247,7 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -274,7 +274,7 @@ def kakao_callback(request):
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
         accept_json = accept.json()
-        print(f"신규 Kakao 가입 유저 GET: {accept_json}")
+        # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -395,6 +395,11 @@ def google_callback(request):
     
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
+        if User.objects.filter(username = username).first():
+            print("This username is already taken")
+            return redirect('home')
+        
+        
         data = {'access_token': access_token, 'code': code}
         accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
         accept_status = accept.status_code
