@@ -1,29 +1,27 @@
-from rest_framework import generics, status, viewsets
-from rest_framework.response import Response
+from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.contrib.auth.models import User
-from rest_framework.views import APIView
 
+from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-
 from rest_framework.generics import UpdateAPIView, RetrieveAPIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
+from json.decoder import JSONDecodeError
+from pathlib import Path
+import requests
+import json
 
 from .serializers import *
-import urllib 
+from accounts.models import User
 
-
-from django.conf import settings
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.google import views as google_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from rest_framework.decorators import api_view, permission_classes
-from django.http import JsonResponse
-from json.decoder import JSONDecodeError
-from rest_framework.response import Response
 from dj_rest_auth.registration.views import SocialLoginView
-import requests
-import jwt
-from django.views import View
 from allauth.socialaccount.models import SocialAccount
 from rest_framework.permissions import AllowAny
 from allauth.account.adapter import get_adapter
@@ -199,7 +197,7 @@ def kakao_login(request):
 
 def kakao_callback(request):
     code = request.GET.get("code")
-    print(code)
+    print(f"code : {code}")
     
     # ---- Access Token Request ----
     token_req = requests.get(
@@ -212,7 +210,7 @@ def kakao_callback(request):
         raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
 
     access_token = token_req_json.get("access_token")
-    print(access_token)
+    print(f"access_token : {access_token}")
     
     # ---- Email Request ----
     profile_request = requests.post(
@@ -237,14 +235,14 @@ def kakao_callback(request):
     # ---- Signup or Signin Request ----
     try:
         user = User.objects.get(email=email)
-        # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
-        # kakao계정 email이 다른 SNS로 가입된 유저 email과 충돌한다면
         social_user = SocialAccount.objects.get(user=user)
+        # 이메일은 있는데 카카오 유저가 아닌경우 = 일반회원인 경우
         if social_user is None:
             return JsonResponse(
-                {"err_msg": "email exists but not social user"},
+                {"err_msg": "email exists but not kakao social user"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
         if social_user.provider != "kakao":
             return JsonResponse(
                 {"err_msg": "no matching social type"},
@@ -291,7 +289,8 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
-        accept_json = accept.json()   
+        accept_json = accept.json()
+        # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -410,6 +409,30 @@ def google_callback(request):
        
     
     except User.DoesNotExist:
+        # 기존에 가입된 유저가 없으면 새로 가입
+        if User.objects.filter(username = username).first():
+            print("This username is already taken")
+            return redirect('home')
+        
+        
+        data = {'access_token': access_token, 'code': code}
+        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+        accept_status = accept.status_code
+        if accept_status != 200:
+            print(f"Failed to signup_new user. Status code: {accept_status}")
+            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
+            
+        accept_json = accept.json()
+        accept_json.pop('user',None)
+        # refresh_token을 headers 문자열에서 추출함
+        refresh_token = accept.headers['Set-Cookie']
+        refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
+        token_index = refresh_token.index(' refresh_token')
+        refresh_token = refresh_token[token_index+1]
+        response_cookie = JsonResponse(accept_json)
+        response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
+        
+        return response_cookie
        data = {"access_token": access_token, "code": code}
        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
        accept_status = accept.status_code

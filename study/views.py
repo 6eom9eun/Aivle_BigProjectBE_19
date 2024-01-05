@@ -1,23 +1,24 @@
+from django.http import JsonResponse, FileResponse
+from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
+from django.urls import reverse
+from django.shortcuts import redirect
+from django.core.exceptions import ValidationError
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
+import json
+from paddleocr import PaddleOCR
+
 from .models import Word, Quiz
 from .new_gpt import *
 from .text_speech import *
 from .spell_correct import *
 from .serializers import *
-from django.http import JsonResponse
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
-from django.urls import reverse
-from django.shortcuts import redirect
-import json
-from paddleocr import PaddleOCR
-from django.conf import settings
-from django.core.exceptions import ValidationError
-import os
 
 # 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):
@@ -128,13 +129,13 @@ class CompositionView(APIView):
         try:
             selected_word_by_user = json.loads(request.data.get('selected_words', []))
 
-            if len(selected_word_by_user) != 2:
-                return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+            if len(selected_word_by_user) < 2:
+                return JsonResponse({"error": "단어를 2개 이상 선택해야 합니다. 재접속 후 다시 진행해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
             selected_words = Word.objects.filter(id__in=selected_word_by_user)
 
-            if len(selected_words) != 2:
-                return JsonResponse({"error": "올바른 단어 ID를 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+            if len(selected_words) < 2:
+                return JsonResponse({"error": "올바른 단어 ID를 선택해야 합니다. 재접속 후 다시 진행해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
             selected_words_info = [{'word': word.word, 'meaning': word.meaning} for word in selected_words]
 
@@ -207,13 +208,13 @@ class TextToSpeechView(APIView):
             tts = gTTS(text=text, lang="ko", slow=False)
             
             # 임시 파일로 저장 = 데이터가 쌓이지 않음
-            mp3_file_path = "/tmp/speech.mp3"
+            mp3_file_path = "study/tmp/speech.mp3"
             tts.save(mp3_file_path)
 
             # 브라우저로 음성 파일을 전송
-            with open(mp3_file_path, 'rb') as file:
-                response = HttpResponse(file.read(), content_type='audio/mpeg')
-                response['Content-Disposition'] = 'inline; filename=speech.mp3'
+            response = FileResponse(open(mp3_file_path, 'rb'))
+            response['Content-Type'] = 'audio/mp3'
+            response['Content-Disposition'] = 'inline; filename=speech.mp3'
             
             return response
         except Exception as e:
@@ -231,14 +232,16 @@ class SpeechToTextView(APIView):
                 return Response({"error": "오디오파일 받지않았음."}, status=400)
 
             # 오디오 파일을 임시로 저장 = 데이터가 쌓이지 않음
-            audio_file_path = "/tmp/audio.wav"
+            audio_file_path = "study/tmp/audio.wav"
             with open(audio_file_path, 'wb') as file:
                 for chunk in audio_file.chunks():
                     file.write(chunk)
-            
+        
             # 음성을 텍스트로 변환
             transcript = Speech_To_Text(audio_file_path)
+            print(transcript)
             
-            return Response({"text": transcript.get('text', '')}, status=status.HTTP_200_OK)
+            # return Response({"text": transcript.get('text', '')}, status=status.HTTP_200_OK)
+            return Response({"text": transcript}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

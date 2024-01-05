@@ -1,7 +1,6 @@
-# board > serializers.py
 from rest_framework import serializers
-from .models import Post, Comment
-          
+from .models import Post, Comment, Image
+
 class CommentSerializer(serializers.ModelSerializer):
     user_id = serializers.ReadOnlyField(source='user.id')
     username = serializers.ReadOnlyField(source='user.username')
@@ -9,15 +8,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['user_id', 'username', 'comment_id', 'image', 'reply', 'created_at', 'comment']
+        fields = ['comment_id', 'user_id', 'username', 'image', 'reply', 'created_at', 'comment']
         read_only_fields = ['reply']
         
 class PostSerializer(serializers.ModelSerializer):
-    user_id = serializers.ReadOnlyField(source='user.id')
-    username = serializers.ReadOnlyField(source = 'user.username') # views.py에서 넘겨준 user의 username 값 받아옴
+    user_id = serializers.ReadOnlyField(source = 'user.id') # views.py에서 넘겨준 user의 username 값 받아옴
+    username = serializers.ReadOnlyField(source='user.username')
     class Meta:
         model = Post
-        fields = ['username', 'user_id', 'post_id', 'title', 'created_at', 'image']
+        fields = ['post_id', 'user_id', 'username', 'title', 'created_at', 'image']
 
 class PostDetailSerializer(serializers.ModelSerializer):
     user_id = serializers.ReadOnlyField(source='user.id')
@@ -27,13 +26,15 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['user_id', 'username', 'post_id','title', 'content', 'created_at', 'comments', 'image']
- 
+        fields = ['post_id', 'user_id', 'username', 'title', 'content', 'created_at', 'comments', 'image']
+
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ("title", "content", "image")
-
-# 이미지 업로드 시리얼라이저
-class ImageUploadSerializer(serializers.Serializer):
-    images = serializers.ListField(child=serializers.ImageField()) # 이미지 여러장
+        
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = '__all__'
+        

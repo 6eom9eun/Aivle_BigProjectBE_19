@@ -7,7 +7,6 @@ from rest_framework.validators import UniqueValidator # 이메일 중복 방지 
 
 from django.contrib.auth import authenticate # Django의 기본 authenticate 함수 -> 설정한 TokenAuth 방식으로 유저를 인증.
 from django.contrib.auth.hashers import check_password
-
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
 from .models import *
