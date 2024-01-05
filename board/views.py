@@ -33,12 +33,15 @@ class PostViewSet(generics.ListCreateAPIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all().order_by('-created_at') # 생성일자기준으로 내림차순
+    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostDetailSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly] # 비인증 요청에 대해서는 읽기만 허용
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     lookup_field = 'post_id'
     partial_update = True  # 부분 업데이트 허용 설정
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
         
 # (댓글) Comment 목록 보여주기
 class CommentViewSet(generics.ListCreateAPIView):
@@ -64,10 +67,16 @@ class CommentViewSet(generics.ListCreateAPIView):
 # (댓글) Comment 조회, 수정, 삭제     
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     serializer_class = CommentSerializer
     lookup_url_kwarg = 'comment_id'
     queryset = Comment.objects.all()
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.delete()
     
 # 이미지 업로드 뷰
 class ImageUploadView(APIView):
