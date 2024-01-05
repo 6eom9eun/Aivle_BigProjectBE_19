@@ -128,13 +128,13 @@ class CompositionView(APIView):
         try:
             selected_word_by_user = json.loads(request.data.get('selected_words', []))
 
-            if len(selected_word_by_user) != 2:
-                return JsonResponse({"error": "단어를 2개 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+            if len(selected_word_by_user) < 2:
+                return JsonResponse({"error": "단어를 2개 이상 선택해야 합니다. 재접속 후 다시 진행해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
             selected_words = Word.objects.filter(id__in=selected_word_by_user)
 
-            if len(selected_words) != 2:
-                return JsonResponse({"error": "올바른 단어 ID를 선택하세요."}, status=status.HTTP_400_BAD_REQUEST)
+            if len(selected_words) < 2:
+                return JsonResponse({"error": "올바른 단어 ID를 선택해야 합니다. 재접속 후 다시 진행해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
             selected_words_info = [{'word': word.word, 'meaning': word.meaning} for word in selected_words]
 
