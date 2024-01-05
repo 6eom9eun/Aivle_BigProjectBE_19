@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from accounts.models import Profile
+import os
+
 """
     post_id : 글 번호
     user : 작성자
@@ -25,6 +27,12 @@ class Post(models.Model):
 
 class Image(models.Model):
     image = models.ImageField(upload_to='uploads/%Y/%m/%d/', blank=True, null=True)
+    
+    def delete(self, *args, **kwargs):
+        if self.image:
+            if os.path.isfile(self.image.path):
+                os.remove(self.image.path)
+        super().delete(*args, **kwargs)
         
 class Comment(models.Model): # 해당 글의 댓글 관리
     """
