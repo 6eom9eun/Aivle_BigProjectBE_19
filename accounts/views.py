@@ -235,14 +235,14 @@ def kakao_callback(request):
     # ---- Signup or Signin Request ----
     try:
         user = User.objects.get(email=email)
-        # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
-        # kakao계정 email이 다른 SNS로 가입된 유저 email과 충돌한다면
         social_user = SocialAccount.objects.get(user=user)
+        # 이메일은 있는데 카카오 유저가 아닌경우 = 일반회원인 경우
         if social_user is None:
             return JsonResponse(
-                {"err_msg": "email exists but not social user"},
+                {"err_msg": "email exists but not kakao social user"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # 기존에 가입된 유저의 Provider가 kakao가 아니면 에러 발생, 맞으면 로그인
         if social_user.provider != "kakao":
             return JsonResponse(
                 {"err_msg": "no matching social type"},
@@ -261,7 +261,7 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -287,7 +287,8 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
-        accept_json = accept.json()   
+        accept_json = accept.json()
+        print(f"신규 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
