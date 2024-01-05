@@ -1,23 +1,24 @@
+from django.http import JsonResponse, FileResponse
+from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
+from django.urls import reverse
+from django.shortcuts import redirect
+from django.core.exceptions import ValidationError
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
+import json
+from paddleocr import PaddleOCR
+
 from .models import Word, Quiz
 from .new_gpt import *
 from .text_speech import *
 from .spell_correct import *
 from .serializers import *
-from django.http import JsonResponse, FileResponse
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from django.db.models import Q # OR 조건, 부정, 그리고 조합과 관련된 복잡한 쿼리
-from django.urls import reverse
-from django.shortcuts import redirect
-import json
-from paddleocr import PaddleOCR
-from django.conf import settings
-from django.core.exceptions import ValidationError
-import os
 
 # 랜덤 퀴즈 생성 뷰
 class RandomQuizView(APIView):

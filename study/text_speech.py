@@ -3,8 +3,6 @@ from openai import OpenAI
 from pathlib import Path
 import os
 import json
-import gc
-import torch
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
