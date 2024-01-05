@@ -60,6 +60,7 @@ class RandomQuizView(APIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# gpt가 작문 뷰
 class MakeSentenceView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -101,7 +102,7 @@ class QuizDetailView(generics.RetrieveUpdateDestroyAPIView):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# 작문 뷰
+# 직접 작문하기 뷰
 class CompositionView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]

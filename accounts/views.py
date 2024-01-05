@@ -38,6 +38,7 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 import os
 
+
 # --------- 소셜 로그인 api 주소 ----------
 SECRET_BASE_DIR = Path(__file__).resolve().parent.parent
 with open(SECRET_BASE_DIR/'secrets.json') as f:
