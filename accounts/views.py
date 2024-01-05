@@ -23,6 +23,20 @@ from allauth.socialaccount.providers.google import views as google_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.models import SocialAccount
+from rest_framework.permissions import AllowAny
+from allauth.account.adapter import get_adapter
+from django.shortcuts import redirect
+from .serializers import *
+from accounts.models import User
+from django.db import IntegrityError, transaction
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+
+
+
+import json
+from json.decoder import JSONDecodeError
+from pathlib import Path
+import os
 
 # --------- 소셜 로그인 api 주소 ----------
 SECRET_BASE_DIR = Path(__file__).resolve().parent.parent
@@ -247,7 +261,7 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -268,6 +282,8 @@ def kakao_callback(request):
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
         print("===== 신규 Kakao 가입 =====")
+        
+    
         if accept_status != 200:
             print(f"Failed to signup_new user. Status code: {accept_status}")
             return JsonResponse({"err_msg": "failed to signup_new user"}, status=accept_status)
@@ -352,46 +368,45 @@ def google_callback(request):
     ### 2-2. 성공 시 이메일 가져오기
     email_req_json = email_req.json()
     email = email_req_json.get('email')
+    
+    
+    
 
     # return JsonResponse({'access': access_token, 'email':email})
 
     #################################################################
+      
 
- # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
+#  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
     try:
         user = User.objects.get(email=email)
-        
-        # 기존에 가입된 유저의 Provider가 google가 아니면 에러 발생, 맞으면 로그인
-        # 다른 SNS로 가입된 유저
+
         social_user = SocialAccount.objects.get(user=user)
-        if social_user is None:
-            return JsonResponse(
-                {"err_msg": "email exists but not social user"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+
         if social_user.provider != "google":
-            return JsonResponse(
-                {"err_msg": "no matching social type"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        # 기존에 google로 가입된 유저
+           return JsonResponse(
+               {"message": "소셜이 일치하지 않습니다."},
+               status=status.HTTP_400_BAD_REQUEST,
+           )
+
         data = {"access_token": access_token, "code": code}
         accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
         accept_status = accept.status_code
+
         if accept_status != 200:
-            return JsonResponse({"err_msg": "failed to signin"}, status=accept_status)
-        accept_json = accept.json()
-        accept_json.pop('user',None)
-        # refresh_token을 headers 문자열에서 추출함
-        refresh_token = accept.headers['Set-Cookie']
-        refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
-        token_index = refresh_token.index(' refresh_token')
-        cookie_max_age = 3600 * 24 * 14 # 14 days
-        refresh_token = refresh_token[token_index+1]
-        response_cookie = JsonResponse(accept_json)
-        response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
-        print("\n\n\n", response_cookie)
-        return response_cookie
+           return JsonResponse({"message": "구글로그인에 실패했습니다."}, status=accept_status)
+
+        user, created = User.objects.get_or_create(email=email)
+        access_token = AccessToken.for_user(user)
+        refresh_token = RefreshToken.for_user(user)
+
+        # accept_json = accept.json()
+        # accept_json.pop("user", None)
+        return Response(
+           {"refresh": str(refresh_token), "access": str(access_token)},
+           status=status.HTTP_200_OK,
+       )
+       
     
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
@@ -418,6 +433,30 @@ def google_callback(request):
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         
         return response_cookie
+       data = {"access_token": access_token, "code": code}
+       accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+       accept_status = accept.status_code
+
+       if accept_status != 200:
+           return JsonResponse({"message": "abc."}, status=accept_status)
+
+       user, created = User.objects.get_or_create(email=email)
+       access_token = AccessToken.for_user(user)
+       refresh_token = RefreshToken.for_user(user)
+       # accept_json = accept.json()
+       # accept_json.pop("user", None)
+
+
+       return Response(
+            {"refresh": str(refresh_token),"access": str(access_token)},
+            status=status.HTTP_201_CREATED,
+        )
+       
+    except SocialAccount.DoesNotExist:
+       return JsonResponse(
+           {"message": "소셜로그인 유저가 아닙니다."},
+           status=status.HTTP_400_BAD_REQUEST,
+       )
 
     
 class GoogleLogin(SocialLoginView):
