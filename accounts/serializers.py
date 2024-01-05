@@ -51,7 +51,8 @@ class SignupSerializer(serializers.ModelSerializer):
         user.save()
         token = Token.objects.create(user=user)
         return user
-    
+
+# 로그인 시리얼라이저 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True) # write_only=True : 클라이언트 -> 서버 역직렬화 가능, 서버 -> 클라이언트 직렬화 X
@@ -86,7 +87,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ('introduction','image','user_level')
         
-# 유저 정보 수정, 작동 확인 해야함
+# 유저 정보 수정 시리얼라이저
 class UserUpdateSerializer(serializers.ModelSerializer):
     old_password = serializers.CharField(write_only=True, required=False)
 

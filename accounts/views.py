@@ -24,6 +24,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.models import SocialAccount
 
+
 # --------- 소셜 로그인 api 주소 ----------
 SECRET_BASE_DIR = Path(__file__).resolve().parent.parent
 with open(SECRET_BASE_DIR/'secrets.json') as f:
