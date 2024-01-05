@@ -1,7 +1,7 @@
-from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from .models import *
-from rest_framework import serializers
+
 
 # 퀴즈 시리얼라이저
 class QuizSerializer(serializers.ModelSerializer):

@@ -1,22 +1,17 @@
-# board > views.py
-from django.urls import is_valid_path
-from board.serializers import PostSerializer, PostCreateSerializer, PostDetailSerializer, CommentSerializer
-from .permissions import CustomReadOnly, IsOwnerOrReadOnly
-from .models import Post, Comment, Image
-from django.http import JsonResponse, FileResponse
-from rest_framework import viewsets, generics, status
-from rest_framework.response import Response
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.views import APIView
 
-from django.shortcuts import get_object_or_404, get_list_or_404
-from rest_framework.decorators import api_view
-
+from .permissions import CustomReadOnly, IsOwnerOrReadOnly
+from .models import Post, Comment, Image
 from accounts.models import Profile
+from .serializers import PostSerializer, PostCreateSerializer, PostDetailSerializer, CommentSerializer
 
 # Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
 class PostViewSet(generics.ListCreateAPIView):

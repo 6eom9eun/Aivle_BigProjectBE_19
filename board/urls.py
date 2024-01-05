@@ -1,6 +1,5 @@
 # board > urls.py
-from django.urls import path, include
-
+from django.urls import path
 from .views import PostViewSet, PostDetailViewSet, CommentViewSet, CommentDetailView, ImageUploadView
 
 app_name = 'board'

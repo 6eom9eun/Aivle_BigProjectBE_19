@@ -1,42 +1,28 @@
-from rest_framework import generics, status, viewsets
-from rest_framework.response import Response
+from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.contrib.auth.models import User
-from rest_framework.views import APIView
 
+from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-
 from rest_framework.generics import UpdateAPIView, RetrieveAPIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
+from json.decoder import JSONDecodeError
+from pathlib import Path
+import requests
+import json
 
 from .serializers import *
-import urllib 
+from accounts.models import User
 
-
-from django.conf import settings
 from allauth.socialaccount.providers.kakao import views as kakao_view
 from allauth.socialaccount.providers.google import views as google_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from rest_framework.decorators import api_view, permission_classes
-from django.http import JsonResponse
-from json.decoder import JSONDecodeError
-from rest_framework.response import Response
 from dj_rest_auth.registration.views import SocialLoginView
-import requests
-import jwt
-from django.views import View
 from allauth.socialaccount.models import SocialAccount
-from rest_framework.permissions import AllowAny
-from allauth.account.adapter import get_adapter
-from django.shortcuts import redirect
-from .serializers import *
-from accounts.models import User
-from django.db import IntegrityError, transaction
-
-
-import json
-from json.decoder import JSONDecodeError
-from pathlib import Path
-import os
 
 # --------- 소셜 로그인 api 주소 ----------
 SECRET_BASE_DIR = Path(__file__).resolve().parent.parent
