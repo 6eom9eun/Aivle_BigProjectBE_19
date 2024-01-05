@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Post, Comment
-          
+from .models import Post, Comment, Image
+
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
     image = serializers.ReadOnlyField(source='profile.image.url') # 이미지가 경로 url 이면 .url 붙여야 됨.
@@ -24,8 +24,14 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['post_id', 'user', 'title', 'content', 'created_at', 'comments', 'image']
- 
+
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ("title", "content", "image")
+        
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = '__all__'
+        
