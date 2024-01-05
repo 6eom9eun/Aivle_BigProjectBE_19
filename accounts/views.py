@@ -378,24 +378,24 @@ def google_callback(request):
     #################################################################
       
 
-#  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
+# #  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
     try:
         user = User.objects.get(email=email)
 
         social_user = SocialAccount.objects.get(user=user)
 
         if social_user.provider != "google":
-           return JsonResponse(
-               {"message": "소셜이 일치하지 않습니다."},
-               status=status.HTTP_400_BAD_REQUEST,
-           )
+            return JsonResponse(
+                {"message": "소셜이 일치하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         data = {"access_token": access_token, "code": code}
-        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+        accept = requests.post(f"{BASE_URL}users/google/login/finish/", data=data)
         accept_status = accept.status_code
 
         if accept_status != 200:
-           return JsonResponse({"message": "구글로그인에 실패했습니다."}, status=accept_status)
+            return JsonResponse({"message": "구글로그인에 실패했습니다."}, status=accept_status)
 
         user, created = User.objects.get_or_create(email=email)
         access_token = AccessToken.for_user(user)
@@ -404,61 +404,34 @@ def google_callback(request):
         # accept_json = accept.json()
         # accept_json.pop("user", None)
         return Response(
-           {"refresh": str(refresh_token), "access": str(access_token)},
-           status=status.HTTP_200_OK,
-       )
-       
-    
+            {"refresh": str(refresh_token), "access": str(access_token)},
+            status=status.HTTP_200_OK,
+        )
+
     except User.DoesNotExist:
-        # 기존에 가입된 유저가 없으면 새로 가입
-        if User.objects.filter(username = username).first():
-            print("This username is already taken")
-            return redirect('home')
-        
-        
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
+        data = {"access_token": access_token, "code": code}
+        accept = requests.post(f"{BASE_URL}users/google/login/finish/", data=data)
         accept_status = accept.status_code
+
         if accept_status != 200:
-            print(f"Failed to signup_new user. Status code: {accept_status}")
-            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
-            
-        accept_json = accept.json()
-        accept_json.pop('user',None)
-        # refresh_token을 headers 문자열에서 추출함
-        refresh_token = accept.headers['Set-Cookie']
-        refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
-        token_index = refresh_token.index(' refresh_token')
-        refresh_token = refresh_token[token_index+1]
-        response_cookie = JsonResponse(accept_json)
-        response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
-        
-        return response_cookie
-       data = {"access_token": access_token, "code": code}
-       accept = requests.post(f"{BASE_URL}accounts/google/login/finish/", data=data)
-       accept_status = accept.status_code
+            return JsonResponse({"message": "구글 회원가입에 실패했습니다."}, status=accept_status)
 
-       if accept_status != 200:
-           return JsonResponse({"message": "abc."}, status=accept_status)
+        user, created = User.objects.get_or_create(email=email)
+        access_token = AccessToken.for_user(user)
+        refresh_token = RefreshToken.for_user(user)
+        # accept_json = accept.json()
+        # accept_json.pop("user", None)
 
-       user, created = User.objects.get_or_create(email=email)
-       access_token = AccessToken.for_user(user)
-       refresh_token = RefreshToken.for_user(user)
-       # accept_json = accept.json()
-       # accept_json.pop("user", None)
-
-
-       return Response(
-            {"refresh": str(refresh_token),"access": str(access_token)},
+        return Response(
+            {"refresh": str(refresh_token), "access": str(access_token)},
             status=status.HTTP_201_CREATED,
         )
-       
-    except SocialAccount.DoesNotExist:
-       return JsonResponse(
-           {"message": "소셜로그인 유저가 아닙니다."},
-           status=status.HTTP_400_BAD_REQUEST,
-       )
 
+    except SocialAccount.DoesNotExist:
+        return JsonResponse(
+            {"message": "소셜로그인 유저가 아닙니다."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     
 class GoogleLogin(SocialLoginView):
     adapter_class = google_view.GoogleOAuth2Adapter
