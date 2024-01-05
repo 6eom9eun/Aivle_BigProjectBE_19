@@ -28,9 +28,9 @@ def is_correct(sentence, words):
         if word_k[0] in sentence_k:
             cnt+=1
 
-    # 2개 이상 단어가 들어가 있지 않은 경우
-    if cnt<2:
-        return {'answer':False, 'text':'현재 '+str(cnt)+'개의 단어가 들어가 있습니다. 단어를 추가해주세요.'}
+    # 선택한 단어 개수 이상의 단어가 들어가 있지 않은 경우
+    if cnt < len(words):
+        return {'answer':False, 'text': '현재 '+str(cnt)+'개의 단어가 포함되어 있습니다. 단어를 추가해주세요.'}
 
     # 들어가 있다면 문법적으로 맞는 문장인지 확인하기
     else:
