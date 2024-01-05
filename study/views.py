@@ -188,8 +188,18 @@ class OcrView(APIView):
 
                     if paragraph.strip():
                         text_results.append(paragraph.strip())
-
-                return JsonResponse({'text_results': text_results}, status=status.HTTP_201_CREATED)
+                    
+                    # 문장 만들기
+                    sentence=''
+                    for temp in text_results:
+                        sentence+=(' '+temp)        # 앞에 공백을 처리해서 문장으로 변환
+                    
+                    # 정답 텍스트 불러오기
+                    text = request.data.get('text', '')
+                    print(text)
+                    correct=response_is_correct(text, sentence)
+                
+                return JsonResponse({'text_results': text_results, 'answer':correct}, status=status.HTTP_201_CREATED)
             else:
                 raise ValidationError("이미지가 없습니다.")
         except Exception as e:
@@ -240,9 +250,15 @@ class SpeechToTextView(APIView):
         
             # 음성을 텍스트로 변환
             transcript = Speech_To_Text(audio_file_path)
-            print(transcript)
+            
+            # 정답 텍스트 불러오기
+            text = request.data.get('text', '')
+            print(text)
+            correct=response_is_correct(text, transcript)
             
             # return Response({"text": transcript.get('text', '')}, status=status.HTTP_200_OK)
-            return Response({"text": transcript}, status=status.HTTP_200_OK)
+            # return Response({"text": transcript}, status=status.HTTP_200_OK)
+            return Response({"text": transcript, "answer":correct}, status=status.HTTP_200_OK)
+        
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

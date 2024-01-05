@@ -85,3 +85,21 @@ def Speech_To_Text(file_path):
     print(transcript)
     
     return transcript
+
+
+# 코사인 유사도를 통한 채점 시스템
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def response_is_correct(text1,text2):
+    # CountVectorizer를 사용하여 문장을 벡터로 변환
+    vectorizer = CountVectorizer().fit_transform([text1, text2])
+
+    # 코사인 유사도 계산
+    cosine_sim = cosine_similarity(vectorizer)
+    print(cosine_sim[0][1])
+    
+    if cosine_sim[0][1]>=0.3:
+        return True
+    else:
+        return False
