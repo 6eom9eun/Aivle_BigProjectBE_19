@@ -456,14 +456,14 @@ def naver_callback(request):
         
     try:
         user = User.objects.get(email=email)
-        # 기존에 가입된 유저의 Provider가 google이 아니면 에러 발생, 맞으면 로그인
+        # 기존에 가입된 유저의 Provider가 naver이 아니면 에러 발생, 맞으면 로그인
         # 다른 SNS로 가입된 유저
         social_user = SocialAccount.objects.get(user=user)
         if social_user is None:
             return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
         if social_user.provider != 'google':
             return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
-        # 기존에 Google로 가입된 유저
+        # 기존에 naver로 가입된 유저
         data = {'access_token': access_token, 'code': code}
         accept = requests.post(
             f"{BASE_URL}accounts/naver/login/finish/", data=data)
@@ -484,8 +484,12 @@ def naver_callback(request):
         accept_json = accept.json()
         accept_json.pop('user', None)
 
-    return JsonResponse({"access_token": access_token})
+    return JsonResponse({"access_token": access_token}) 
+        
 
+
+
+   
 
 
 
