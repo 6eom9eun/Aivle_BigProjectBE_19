@@ -459,7 +459,7 @@ def naver_callback(request):
         social_user = SocialAccount.objects.get(user=user)
         if social_user is None:
             return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
-        if social_user.provider != 'google':
+        if social_user.provider != 'naver':
             return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
         # 기존에 naver로 가입된 유저
         data = {'access_token': access_token, 'code': code}
