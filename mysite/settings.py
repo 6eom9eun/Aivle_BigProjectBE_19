@@ -110,9 +110,20 @@ SOCIALACCOUNT_PROVIDERS = {
             'clinet_id':secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID'],
             'secret': secrets['SOCIAL_AUTH_GOOGLE_SECRET']
             },
+    },
+    'naver': {
+        'APP':{
+            'clinet_id':secrets['NAVER_CLIENT_ID'],
+            'secret': secrets['NAVER_CLIENT_SECRET']
+            },
     }
     # 다른 소셜 로그인 제공자 설정도 추가할 수 있음
 }
+
+# cookie key 와 refresh cookie key 의 이름을 설정
+JWT_AUTH_COOKIE = 'sociallogin-auth'
+JWT_AUTH_REFRESH_COOKIE = 'sociallogin-refresh-token'
+
 
 from datetime import timedelta
 
@@ -121,6 +132,10 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
+    # 토큰에 들어갈 알고리즘
+    'ALGORITHM': 'HS256',
+    # 토큰을 만드는데 사용할 secret key
+    'SIGNING_KEY': SECRET_KEY,
 }
 
 MIDDLEWARE = [
