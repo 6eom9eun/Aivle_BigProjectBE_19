@@ -30,6 +30,7 @@ from .serializers import *
 from accounts.models import User
 from django.db import IntegrityError, transaction
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+# from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -197,7 +198,8 @@ def kakao_login(request):
     )
 
 def kakao_callback(request):
-    code = request.GET.get("code")
+    body = json.loads(request.body)
+    code = body['code']
     print(f"code : {code}")
     
     # ---- Access Token Request ----
@@ -321,8 +323,6 @@ class KakaoLogin(SocialLoginView):
     adapter_class = kakao_view.KakaoOAuth2Adapter
     client_class = OAuth2Client
     callback_url = KAKAO_REDIRECT_URI
-    
-    
     
 #------------------Google Login--------------------------------
 import logging
