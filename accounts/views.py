@@ -30,6 +30,8 @@ from .serializers import *
 from accounts.models import User
 from django.db import IntegrityError, transaction
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+# from django.views.decorators.csrf import csrf_exempt
+
 from django.conf import settings
 
 
@@ -51,7 +53,7 @@ Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
 SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
 
 BASE_URL = "http://127.0.0.1:8000/"
-KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
+KAKAO_CALLBACK_URI = "http://127.0.0.1:3000/accounts/kakao/callback/"
 GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/callback/"
 # ----------------------------------------
 
@@ -184,7 +186,7 @@ class OtherUserProfileView(RetrieveAPIView):
 
 # KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 # KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
-# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI'] # http://127.0.0.1:8000/accounts/kakao/callback/
+# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
 
 # ---------- 카카오 로그인 ---------------
 
@@ -197,7 +199,8 @@ def kakao_login(request):
     )
 
 def kakao_callback(request):
-    code = request.GET.get("code")
+    body = json.loads(request.body)
+    code = body['code']
     print(f"code : {code}")
     
     # ---- Access Token Request ----
@@ -262,7 +265,7 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -322,8 +325,6 @@ class KakaoLogin(SocialLoginView):
     client_class = OAuth2Client
     callback_url = KAKAO_REDIRECT_URI
     
-    
-    
 #------------------Google Login--------------------------------
 import logging
 state = secrets['STATE']
@@ -364,9 +365,16 @@ def google_callback(request):
         return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
     email_req_json = email_req.json()
     email = email_req_json.get('email')
-    """
-    Signup or Signin Request
-    """
+    
+    
+    
+
+    # return JsonResponse({'access': access_token, 'email':email})
+
+    #################################################################
+
+
+# #  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
     try:
         user = User.objects.get(email=email)
         # 기존에 가입된 유저의 Provider가 google이 아니면 에러 발생, 맞으면 로그인
