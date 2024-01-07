@@ -51,7 +51,7 @@ Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
 SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
 
 BASE_URL = "http://127.0.0.1:8000/"
-KAKAO_CALLBACK_URI = "http://127.0.0.1:8000/accounts/kakao/callback/"
+KAKAO_CALLBACK_URI = "http://127.0.0.1:3000/accounts/kakao/callback/"
 GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/callback/"
 # ----------------------------------------
 
@@ -184,7 +184,7 @@ class OtherUserProfileView(RetrieveAPIView):
 
 # KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 # KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
-# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI'] # http://127.0.0.1:8000/accounts/kakao/callback/
+# KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
 
 # ---------- 카카오 로그인 ---------------
 
@@ -262,7 +262,7 @@ def kakao_callback(request):
             # print(f"data : {data}")
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
-        print(f"기존 Kakao 가입 유저 GET: {accept_json}")
+        # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -376,7 +376,7 @@ def google_callback(request):
     # return JsonResponse({'access': access_token, 'email':email})
 
     #################################################################
-      
+
 
 # #  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
     try:
