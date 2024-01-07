@@ -53,7 +53,6 @@ Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
 SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
 
 BASE_URL = "http://127.0.0.1:8000/"
-KAKAO_CALLBACK_URI = "http://127.0.0.1:3000/accounts/kakao/callback/"
 GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/callback/"
 # ----------------------------------------
 
@@ -199,8 +198,7 @@ def kakao_login(request):
     )
 
 def kakao_callback(request):
-    body = json.loads(request.body)
-    code = body['code']
+    code = request.GET.get("code")
     print(f"code : {code}")
     
     # ---- Access Token Request ----
@@ -485,15 +483,6 @@ def naver_callback(request):
         accept_json.pop('user', None)
 
     return JsonResponse({"access_token": access_token}) 
-        
-
-
-
-   
-
-
-
-
 
 class NaverLogin(SocialLoginView):
     adapter_class = naver_view.NaverOAuth2Adapter
