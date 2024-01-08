@@ -49,6 +49,7 @@ with open(SECRET_BASE_DIR/'secrets.json') as f:
 KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
 KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
+NAVER_REDIRECT_URI = secrets['NAVER_REDIRECT_URI']
 Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
 SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
 
@@ -442,7 +443,7 @@ from allauth.socialaccount.providers.naver import views as naver_view
 client_id = secrets['NAVER_CLIENT_ID']
 state = secrets['STATE']
 client_secret = secrets['NAVER_CLIENT_SECRET']
-NAVER_CALLBACK_URI = BASE_URL + 'accounts/naver/callback'
+
 # 네이버 로그인 창
 def naver_login(request):
     client_id = client_id = secrets['NAVER_CLIENT_ID']
@@ -510,5 +511,5 @@ def naver_callback(request):
 
 class NaverLogin(SocialLoginView):
     adapter_class = naver_view.NaverOAuth2Adapter
-    callback_url = NAVER_CALLBACK_URI
+    callback_url = NAVER_REDIRECT_URI
     client_class = OAuth2Client
