@@ -49,11 +49,9 @@ with open(SECRET_BASE_DIR/'secrets.json') as f:
 KAKAO_REST_API_KEY = secrets['KAKAO_REST_API_KEY']
 KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
 KAKAO_REDIRECT_URI = secrets['KAKAO_REDIRECT_URI']
-Google_API_KEY=secrets['SOCIAL_AUTH_GOOGLE_SECRET']
-SOCIAL_AUTH_GOOGLE_CLIENT_ID=secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID']
-
+NAVER_REDIRECT_URI = secrets['NAVER_REDIRECT_URI']
 BASE_URL = "http://127.0.0.1:8000/"
-GOOGLE_CALLBACK_URI = "http://127.0.0.1:8000/accounts/google/callback/"
+
 # ----------------------------------------
 
 # 회원가입 뷰 : 생성 기능 -> CreateAPIView
@@ -347,92 +345,6 @@ class KakaoLogin(SocialLoginView):
     client_class = OAuth2Client
     callback_url = KAKAO_REDIRECT_URI
     
-#------------------Google Login--------------------------------
-import logging
-state = secrets['STATE']
-# def google_login(request):
-#     scope = "https://www.googleapis.com/auth/userinfo.email"
-#     client_id = SOCIAL_AUTH_GOOGLE_CLIENT_ID
-#     return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
-def google_login(request):
-    """
-    Code Request
-    """
-    scope = "https://www.googleapis.com/auth/userinfo.email"
-    client_id = SOCIAL_AUTH_GOOGLE_CLIENT_ID
-    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
-
-
-def google_callback(request):
-    client_id = SOCIAL_AUTH_GOOGLE_CLIENT_ID
-    client_secret =Google_API_KEY
-    code = request.GET.get('code')
-    """
-    Access Token Request
-    """
-    token_req = requests.post(
-        f"https://oauth2.googleapis.com/token?client_id={client_id}&client_secret={client_secret}&code={code}&grant_type=authorization_code&redirect_uri={GOOGLE_CALLBACK_URI}&state={state}")
-    token_req_json = token_req.json()
-    error = token_req_json.get("error")
-    if error is not None:
-        raise JSONDecodeError(f"Failed to decode JSON: {error}", '{"error": "your_error_message"}', 0)
-    access_token = token_req_json.get('access_token')
-    """
-    Email Request
-    """
-    email_req = requests.get(
-        f"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}")
-    email_req_status = email_req.status_code
-    if email_req_status != 200:
-        return JsonResponse({'err_msg': 'failed to get email'}, status=status.HTTP_400_BAD_REQUEST)
-    email_req_json = email_req.json()
-    email = email_req_json.get('email')
-    
-    
-    
-
-    # return JsonResponse({'access': access_token, 'email':email})
-
-    #################################################################
-
-
-# #  # 3. 전달받은 이메일, access_token, code를 바탕으로 회원가입/로그인
-    try:
-        user = User.objects.get(email=email)
-        # 기존에 가입된 유저의 Provider가 google이 아니면 에러 발생, 맞으면 로그인
-        # 다른 SNS로 가입된 유저
-        social_user = SocialAccount.objects.get(user=user)
-        if social_user is None:
-            return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
-        if social_user.provider != 'google':
-            return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
-        # 기존에 Google로 가입된 유저
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(
-            f"{BASE_URL}accounts/google/login/finish/", data=data)
-        accept_status = accept.status_code
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
-    except User.DoesNotExist:
-        # 기존에 가입된 유저가 없으면 새로 가입
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(
-            f"{BASE_URL}accounts/google/login/finish/", data=data)
-        accept_status = accept.status_code
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
-
-
-class GoogleLogin(SocialLoginView):
-    adapter_class = google_view.GoogleOAuth2Adapter
-    callback_url = GOOGLE_CALLBACK_URI
-    client_class = OAuth2Client
 
 #------------------naver-------------------------#
 from rest_framework.views import APIView
@@ -442,7 +354,7 @@ from allauth.socialaccount.providers.naver import views as naver_view
 client_id = secrets['NAVER_CLIENT_ID']
 state = secrets['STATE']
 client_secret = secrets['NAVER_CLIENT_SECRET']
-NAVER_CALLBACK_URI = BASE_URL + 'accounts/naver/callback'
+
 # 네이버 로그인 창
 def naver_login(request):
     client_id = client_id = secrets['NAVER_CLIENT_ID']
@@ -517,5 +429,5 @@ def naver_callback(request):
 
 class NaverLogin(SocialLoginView):
     adapter_class = naver_view.NaverOAuth2Adapter
-    callback_url = NAVER_CALLBACK_URI
+    callback_url = NAVER_REDIRECT_URI
     client_class = OAuth2Client
