@@ -105,12 +105,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret': KAKAO_REST_API_KEY,
         }
     },
-    'google': {
-        'APP':{
-            'clinet_id':secrets['SOCIAL_AUTH_GOOGLE_CLIENT_ID'],
-            'secret': secrets['SOCIAL_AUTH_GOOGLE_SECRET']
-            },
-    },
     'naver': {
         'APP':{
             'clinet_id':secrets['NAVER_CLIENT_ID'],
