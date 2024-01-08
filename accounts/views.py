@@ -30,7 +30,6 @@ from .serializers import *
 from accounts.models import User
 from django.db import IntegrityError, transaction
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework.authtoken.models import Token
 # from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
@@ -229,6 +228,7 @@ def kakao_callback(request):
     kakao_account = profile_json.get("kakao_account")
     # kakao_account에서 이메일 외에 카카오톡 프로필 이미지, 배경 이미지 url 가져올 수 있음
     # print(kakao_account)
+    
     email = kakao_account.get("email", None)
     profile = kakao_account.get("profile")
     nickname = profile.get("nickname")
@@ -265,17 +265,13 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
         # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
-        # accept_json.pop('user', None)
+        accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         cookie_max_age = 3600 * 24 * 14 # 14 days
         refresh_token = refresh_token[token_index+1]
-        user = User.objects.get(username = accept_json['user']['username'])
-        token = Token.objects.get(user = user)
-        token_value = token.key
-        accept_json['token'] = token_value
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
@@ -298,17 +294,12 @@ def kakao_callback(request):
 
         accept_json = accept.json()
         # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
-        # accept_json.pop('user', None)
-
+        accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         refresh_token = refresh_token[token_index+1]
-        user = User.objects.get(username = accept_json['user']['username'])
-        token = Token.objects.get(user = user)
-        token_value = token.key
-        accept_json['token'] = token_value
 
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
