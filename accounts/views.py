@@ -189,8 +189,8 @@ class OtherUserProfileView(RetrieveAPIView):
 
 # ---------- 카카오 로그인 ---------------
 
-# @api_view(["GET"])
-# @permission_classes([AllowAny])
+@api_view(["GET"])
+@permission_classes([AllowAny])
 
 def kakao_login(request):
     return redirect(
