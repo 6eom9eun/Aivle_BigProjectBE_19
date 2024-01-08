@@ -358,7 +358,7 @@ client_secret = secrets['NAVER_CLIENT_SECRET']
 # 네이버 로그인 창
 def naver_login(request):
     client_id = client_id = secrets['NAVER_CLIENT_ID']
-    return redirect(f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={client_id}&state=STATE_STRING&redirect_uri={NAVER_CALLBACK_URI}")
+    return redirect(f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={client_id}&state=STATE_STRING&redirect_uri={NAVER_REDIRECT_URI}")
 
 def naver_callback(request):
     client_id = secrets['NAVER_CLIENT_ID']
