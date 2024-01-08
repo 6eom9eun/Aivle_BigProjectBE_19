@@ -30,6 +30,7 @@ from .serializers import *
 from accounts.models import User
 from django.db import IntegrityError, transaction
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework.authtoken.models import Token
 # from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
@@ -271,6 +272,10 @@ def kakao_callback(request):
         token_index = refresh_token.index(' refresh_token')
         cookie_max_age = 3600 * 24 * 14 # 14 days
         refresh_token = refresh_token[token_index+1]
+        user = User.objects.get(username = accept_json['user']['username'])
+        token = Token.objects.get(user = user)
+        token_value = token.key
+        accept_json['token'] = token_value
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
