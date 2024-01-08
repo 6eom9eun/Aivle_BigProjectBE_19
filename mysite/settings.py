@@ -79,8 +79,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny', # 누구나 접근
@@ -88,6 +88,7 @@ REST_FRAMEWORK = {
     ),
 }
 
+"""
 REST_AUTH = {
     'USE_JWT' : True,
     'JWT_AUTH_COOKIE' : 'access',
@@ -97,6 +98,7 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE_USE_CSRF' : False,
     'SESSION_LOGIN' : False
 }
+"""
 
 SOCIALACCOUNT_PROVIDERS = {
     'kakao': {
