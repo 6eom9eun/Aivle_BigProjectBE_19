@@ -271,13 +271,6 @@ def kakao_callback(request):
         refresh_token = refresh_token[token_index+1]
         
         user = User.objects.get(username = accept_json['user']['username'])
-        if user.first_name is None:
-            user.first_name = accept_json['user']['username'][1:]
-            user.last_name = accept_json['user']['username'][:1]
-            user.username = accept_json['user']['email'].split('@')[0]
-            token, created = Token.objects.get_or_create(user = user)
-            user.save()
-        
         token = Token.objects.get(user = user)
         token_value = token.key
         accept_json['token'] = token_value
@@ -293,8 +286,8 @@ def kakao_callback(request):
         # print(data) 
         accept = requests.post(f"{BASE_URL}accounts/kakao/login/finish/", data=data)
         accept_status = accept.status_code
-        print("===== 신규 Kakao 가입 =====")
         
+        print("===== 신규 Kakao 가입 =====")
     
         if accept_status != 200:
             print(f"Failed to signup_new user. Status code: {accept_status}")
@@ -302,8 +295,6 @@ def kakao_callback(request):
         # user의 pk, email, first name, last name과 Access Token, Refresh token 가져옴
 
         accept_json = accept.json()
-        # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
-        # accept_json.pop('user', None)
 
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
@@ -357,14 +348,16 @@ client_secret = secrets['NAVER_CLIENT_SECRET']
 
 # 네이버 로그인 창
 def naver_login(request):
-    client_id = client_id = secrets['NAVER_CLIENT_ID']
-    return redirect(f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={client_id}&state=STATE_STRING&redirect_uri={NAVER_REDIRECT_URI}")
+    client_id = secrets['NAVER_CLIENT_ID']
+    return redirect(f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={client_id}&state={state}&redirect_uri={NAVER_REDIRECT_URI}")
 
 def naver_callback(request):
     client_id = secrets['NAVER_CLIENT_ID']
     client_secret = secrets['NAVER_CLIENT_SECRET']
     code = request.GET.get("code")
     state_string = request.GET.get("state")
+    print("CODE : "+ code)
+    print("STATE : "+ state_string)
 
     # code로 access token 요청
     token_request = requests.get(f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={client_id}&client_secret={client_secret}&code={code}&state={state_string}")
@@ -388,7 +381,6 @@ def naver_callback(request):
     print("프로필 요청 내용:", profile_request.content)
     
     profile_json = profile_request.json()
-
     email = profile_json.get("response").get("email")
 
     if email is None:
@@ -408,11 +400,17 @@ def naver_callback(request):
         accept = requests.post(
             f"{BASE_URL}accounts/naver/login/finish/", data=data)
         accept_status = accept.status_code
+
         if accept_status != 200:
             return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
+        
         accept_json = accept.json()
-        accept_json.pop('user', None)
+        user = User.objects.get(email = profile_json.get("response").get("email"))
+        token = Token.objects.get(user = user)
+        token_value = token.key
+        accept_json['token'] = token_value
         return JsonResponse(accept_json)
+    
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
         data = {'access_token': access_token, 'code': code}
@@ -422,20 +420,17 @@ def naver_callback(request):
         if accept_status != 200:
             return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
         accept_json = accept.json()
-        accept_json.pop('user', None)
-        
-        user = User.objects.get(username = accept_json['user']['username'])
-        user.first_name = accept_json['user']['username'][1:]
-        user.last_name = accept_json['user']['username'][:1]
-        user.username = accept_json['user']['email'].split('@')[0]
-        token = Token.objects.get_or_create(user = user)
+
+        user = User.objects.get(email = profile_json.get("response").get("email"))
+        user.first_name = profile_json.get("response").get("name")[1:]
+        user.last_name = profile_json.get("response").get("name")[:1]
+        user.username = profile_json.get("response").get("nickname")
+        token, created = Token.objects.get_or_create(user = user)
         user.save()
-        
-        token = Token.objects.get(user = user)
         token_value = token.key
         accept_json['token'] = token_value
 
-    return JsonResponse({"access_token": access_token}) 
+        return JsonResponse(accept_json)
 
 class NaverLogin(SocialLoginView):
     adapter_class = naver_view.NaverOAuth2Adapter
