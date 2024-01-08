@@ -265,9 +265,6 @@ def kakao_callback(request):
         accept_json = accept.json()
         # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
-        return JsonResponse({"accept_json": accept_json})
-        
-        """
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
@@ -277,7 +274,6 @@ def kakao_callback(request):
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
-        """
     
     except User.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
@@ -298,9 +294,7 @@ def kakao_callback(request):
         accept_json = accept.json()
         # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
         accept_json.pop('user', None)
-        return JsonResponse({"accept_json": accept_json})
-    
-        """
+
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
@@ -310,7 +304,6 @@ def kakao_callback(request):
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
-        """
     
     except JSONDecodeError as e:
         print(f"JSONDecodeError: {e}")
