@@ -271,7 +271,15 @@ def kakao_callback(request):
         token_index = refresh_token.index(' refresh_token')
         cookie_max_age = 3600 * 24 * 14 # 14 days
         refresh_token = refresh_token[token_index+1]
+        
         user = User.objects.get(username = accept_json['user']['username'])
+        if user.first_name is None:
+            user.first_name = accept_json['user']['username'][1:]
+            user.last_name = accept_json['user']['username'][:1]
+            user.username = accept_json['user']['email'].split('@')[0]
+            token, created = Token.objects.get_or_create(user = user)
+            user.save()
+        
         token = Token.objects.get(user = user)
         token_value = token.key
         accept_json['token'] = token_value
@@ -304,10 +312,18 @@ def kakao_callback(request):
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         refresh_token = refresh_token[token_index+1]
+        
         user = User.objects.get(username = accept_json['user']['username'])
+        user.first_name = accept_json['user']['username'][1:]
+        user.last_name = accept_json['user']['username'][:1]
+        user.username = accept_json['user']['email'].split('@')[0]
+        token, created = Token.objects.get_or_create(user = user)
+        user.save()
+        
         token = Token.objects.get(user = user)
         token_value = token.key
         accept_json['token'] = token_value
+        
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
         return response_cookie
