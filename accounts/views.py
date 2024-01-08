@@ -31,7 +31,6 @@ from accounts.models import User
 from django.db import IntegrityError, transaction
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework.authtoken.models import Token
-# from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
 
