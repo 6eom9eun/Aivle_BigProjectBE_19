@@ -368,11 +368,14 @@ def naver_callback(request):
 
     # code로 access token 요청
     token_request = requests.get(f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={client_id}&client_secret={client_secret}&code={code}&state={state_string}")
+    print("토큰 요청 상태 코드:", token_request.status_code)
+    print("토큰 요청 내용:", token_request.content)
     token_response_json = token_request.json()
 
     error = token_response_json.get("error", None)
     if error is not None:
-        raise JSONDecodeError(error)
+        print("네이버 API 오류:", error)
+        raise Exception("네이버 API 오류: " + error)
 
     access_token = token_response_json.get("access_token")
 
@@ -381,6 +384,9 @@ def naver_callback(request):
         "https://openapi.naver.com/v1/nid/me",
         headers={"Authorization": f"Bearer {access_token}"},
     )
+    print("프로필 요청 상태 코드:", profile_request.status_code)
+    print("프로필 요청 내용:", profile_request.content)
+    
     profile_json = profile_request.json()
 
     email = profile_json.get("response").get("email")
@@ -424,6 +430,10 @@ def naver_callback(request):
         user.username = accept_json['user']['email'].split('@')[0]
         token = Token.objects.get_or_create(user = user)
         user.save()
+        
+        token = Token.objects.get(user = user)
+        token_value = token.key
+        accept_json['token'] = token_value
 
     return JsonResponse({"access_token": access_token}) 
 
