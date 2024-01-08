@@ -315,7 +315,7 @@ def kakao_callback(request):
         user.first_name = accept_json['user']['username'][1:]
         user.last_name = accept_json['user']['username'][:1]
         user.username = accept_json['user']['email'].split('@')[0]
-        token, created = Token.objects.get_or_create(user = user)
+        token = Token.objects.get_or_create(user = user)
         user.save()
         
         token = Token.objects.get(user = user)
@@ -417,6 +417,13 @@ def naver_callback(request):
             return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
         accept_json = accept.json()
         accept_json.pop('user', None)
+        
+        user = User.objects.get(username = accept_json['user']['username'])
+        user.first_name = accept_json['user']['username'][1:]
+        user.last_name = accept_json['user']['username'][:1]
+        user.username = accept_json['user']['email'].split('@')[0]
+        token = Token.objects.get_or_create(user = user)
+        user.save()
 
     return JsonResponse({"access_token": access_token}) 
 
