@@ -265,7 +265,7 @@ def kakao_callback(request):
             return JsonResponse({"err_msg": "failed to signin_registered user."}, status=accept_status)
         accept_json = accept.json()
         # print(f"기존 Kakao 가입 유저 GET: {accept_json}")
-        accept_json.pop('user', None)
+        # accept_json.pop('user', None)
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
@@ -298,13 +298,17 @@ def kakao_callback(request):
 
         accept_json = accept.json()
         # print(f"신규 Kakao 가입 유저 GET: {accept_json}")
-        accept_json.pop('user', None)
+        # accept_json.pop('user', None)
 
         # refresh_token을 headers 문자열에서 추출함
         refresh_token = accept.headers['Set-Cookie']
         refresh_token = refresh_token.replace('=',';').replace(',',';').split(';')
         token_index = refresh_token.index(' refresh_token')
         refresh_token = refresh_token[token_index+1]
+        user = User.objects.get(username = accept_json['user']['username'])
+        token = Token.objects.get(user = user)
+        token_value = token.key
+        accept_json['token'] = token_value
 
         response_cookie = JsonResponse(accept_json)
         response_cookie.set_cookie('refresh_token', refresh_token, max_age=cookie_max_age, httponly=True, samesite='Lax')
