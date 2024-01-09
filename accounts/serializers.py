@@ -26,7 +26,7 @@ class SignupSerializer(serializers.ModelSerializer):
     )
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")],
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 아이디입니다.")],
     )
     password = serializers.CharField(write_only=True, required=True)
 
@@ -38,7 +38,7 @@ class SignupSerializer(serializers.ModelSerializer):
         email_regex = r"^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$"
         if not re.match(email_regex, value):
             raise serializers.ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
-        return value 
+        return value
 
     def validate_password(self, value):
         password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+{}|;':\",./<>?`~[\]\\\-]{8,}$"
@@ -56,15 +56,8 @@ class SignupSerializer(serializers.ModelSerializer):
         )
 
         user.set_password(validated_data['password'])
-        user.is_active = False  # 계정 활성화 상태를 False로 설정
         user.save()
-
-        # 이메일 인증 메일 전송
-        send_email_confirmation(user, self.context['request'])
-
-        # 토큰 생성 및 반환
-        token = Token.objects.get_or_create(user=user)
-        
+        token = Token.objects.create(user=user)
         return user
     
 # 로그인 시리얼라이저 
