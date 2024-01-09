@@ -30,6 +30,15 @@ class SignupSerializer(serializers.ModelSerializer):
     )
     password = serializers.CharField(write_only=True, required=True)
 
+    def validate(self, data):
+        required_fields = ['first_name', 'last_name', 'email', 'username', 'password']
+
+        for field in required_fields:
+            if not data.get(field):
+                raise serializers.ValidationError({field: f"{field} 이 필드는 blank일 수 없습니다."})
+
+        return data
+    
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'username', 'password',)
@@ -46,7 +55,7 @@ class SignupSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
         return value
 
-    def create(self, validated_data):
+    def create(self, validated_data):    
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
