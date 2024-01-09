@@ -115,7 +115,7 @@ class CompositionView(APIView):
             ).order_by('-quiz_id')[:5]
 
             if len(resolved_quizzes) < 5:
-                return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({"error": "아직 충분한 수의 퀴즈가 완료되지 않았습니다."}, status=status.HTTP_201_CREATED)
 
             # 최근 맞춘 5개의 퀴즈에서 5개의 단어 가져오기
             quiz_words = [{'id': quiz.word.id, 'word': quiz.word.word, 'meaning': quiz.word.meaning} for quiz in resolved_quizzes]
