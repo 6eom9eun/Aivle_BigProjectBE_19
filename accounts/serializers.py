@@ -4,11 +4,12 @@ from django.contrib.auth.password_validation import validate_password # 장고 p
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token # Token 모델
 from rest_framework.validators import UniqueValidator # 이메일 중복 방지 검증
-from rest_framework.exceptions import ValidationError
 
 from django.contrib.auth import authenticate # Django의 기본 authenticate 함수 -> 설정한 TokenAuth 방식으로 유저를 인증.
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
+
+from allauth.account.utils import send_email_confirmation
 
 import re
 
@@ -16,35 +17,46 @@ from .models import *
 
 # 회원가입 시리얼라이저
 class SignupSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
+    first_name = serializers.CharField(required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
+    last_name = serializers.CharField(required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
+        error_messages={'blank': "이 필드는 필수 입력 정보입니다.", 'invalid': '유효한 이메일 주소를 입력하십시오.'}
     )
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")],
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 아이디입니다.")],
+        error_messages={'blank': "이 필드는 필수 입력 정보입니다."}
     )
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
 
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'username', 'password',)
 
+    def validate(self, data):
+        required_fields = ['first_name', 'last_name', 'email', 'username', 'password']
+
+        for field in required_fields:
+            if not data.get(field):
+                raise serializers.ValidationError({field: "이 필드는 필수 입력 정보입니다."})
+
+        return data
+    
     def validate_email(self, value):
         email_regex = r"^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$"
         if not re.match(email_regex, value):
-            raise ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
-        return value 
-
-    def validate_password(self, value):
-        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
-        if not re.match(password_regex, value):
-            raise ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
+            raise serializers.ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
         return value
 
-    def create(self, validated_data):
+    def validate_password(self, value):
+        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+{}|;':\",./<>?`~[\]\\\-]{8,}$"
+        if not re.match(password_regex, value):
+            raise serializers.ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
+        return value
+
+    def create(self, validated_data):    
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -56,8 +68,9 @@ class SignupSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         token = Token.objects.create(user=user)
-        return user
+        return token.key
 
+    
 # 로그인 시리얼라이저 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
