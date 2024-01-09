@@ -35,7 +35,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
         for field in required_fields:
             if not data.get(field):
-                raise serializers.ValidationError({field: f"{field} 이 필드는 blank일 수 없습니다."})
+                raise serializers.ValidationError({field:"이 필드는 blank일 수 없습니다."})
 
         return data
     
