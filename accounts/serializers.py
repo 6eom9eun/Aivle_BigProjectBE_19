@@ -4,41 +4,47 @@ from django.contrib.auth.password_validation import validate_password # 장고 p
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token # Token 모델
 from rest_framework.validators import UniqueValidator # 이메일 중복 방지 검증
+from rest_framework.exceptions import ValidationError
 
 from django.contrib.auth import authenticate # Django의 기본 authenticate 함수 -> 설정한 TokenAuth 방식으로 유저를 인증.
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
+import re
+
 from .models import *
 
 # 회원가입 시리얼라이저
 class SignupSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(
-    required=True,
-    )
-    last_name = serializers.CharField(
-        required=True,
-    )
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")], # 모든 쿼리셋에 대해서 고유
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
     )
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")], # 모든 쿼리셋에 대해서 고유
+        validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 이름입니다.")],
     )
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        validators=[validate_password],
-    )
+    password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'username', 'password',)
 
+    def validate_email(self, value):
+        email_regex = r"^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$"
+        if not re.match(email_regex, value):
+            raise ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
+        return value 
+
+    def validate_password(self, value):
+        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+        if not re.match(password_regex, value):
+            raise ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
+        return value
+
     def create(self, validated_data):
-        # CREATE 요청에 대해 create 메서드를 오버라이딩, 유저를 생성하고 토큰도 생성하게 해준다.
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -47,7 +53,7 @@ class SignupSerializer(serializers.ModelSerializer):
             last_name=validated_data['last_name'],
         )
 
-        user.set_password(validated_data['password']) # 패스워드 해싱 -> 장고는 PBKDF2해싱
+        user.set_password(validated_data['password'])
         user.save()
         token = Token.objects.create(user=user)
         return user
