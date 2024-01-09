@@ -17,32 +17,40 @@ import re
 from .models import *
 
 # 회원가입 시리얼라이저
+import re
+from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+
 class SignupSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(required=True)
-    last_name = serializers.CharField(required=True)
+    first_name = serializers.CharField(required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
+    last_name = serializers.CharField(required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 등록된 이메일입니다.")],
+        error_messages={'blank': "이 필드는 필수 입력 정보입니다.", 'invalid': '유효한 이메일 주소를 입력하십시오.'}
     )
     username = serializers.CharField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all(), message="이미 사용 중인 사용자 아이디입니다.")],
+        error_messages={'blank': "이 필드는 필수 입력 정보입니다."}
     )
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, error_messages={'blank': "이 필드는 필수 입력 정보입니다."})
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email', 'username', 'password',)
 
     def validate(self, data):
         required_fields = ['first_name', 'last_name', 'email', 'username', 'password']
 
         for field in required_fields:
             if not data.get(field):
-                raise serializers.ValidationError({field:"이 필드는 blank일 수 없습니다."})
+                raise serializers.ValidationError({field: "이 필드는 필수 입력 정보입니다."})
 
         return data
     
-    class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'email', 'username', 'password',)
-
     def validate_email(self, value):
         email_regex = r"^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$"
         if not re.match(email_regex, value):
@@ -67,7 +75,8 @@ class SignupSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         token = Token.objects.create(user=user)
-        return user
+        return token.key
+
     
 # 로그인 시리얼라이저 
 class LoginSerializer(serializers.Serializer):
