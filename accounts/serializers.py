@@ -10,6 +10,8 @@ from django.contrib.auth import authenticate # Django의 기본 authenticate 함
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
+from allauth.account.utils import send_email_confirmation
+
 import re
 
 from .models import *
@@ -35,13 +37,13 @@ class SignupSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         email_regex = r"^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$"
         if not re.match(email_regex, value):
-            raise ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
+            raise serializers.ValidationError({"email": "이메일 형식이 올바르지 않습니다."})
         return value 
 
     def validate_password(self, value):
-        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+{}|;':\",./<>?`~[\]\\\-]{8,}$"
         if not re.match(password_regex, value):
-            raise ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
+            raise serializers.ValidationError({"password": "비밀번호는 최소 8자리이며, 알파벳과 숫자를 포함해야 합니다."})
         return value
 
     def create(self, validated_data):
@@ -54,10 +56,17 @@ class SignupSerializer(serializers.ModelSerializer):
         )
 
         user.set_password(validated_data['password'])
+        user.is_active = False  # 계정 활성화 상태를 False로 설정
         user.save()
-        token = Token.objects.create(user=user)
-        return user
 
+        # 이메일 인증 메일 전송
+        send_email_confirmation(user, self.context['request'])
+
+        # 토큰 생성 및 반환
+        token = Token.objects.get_or_create(user=user)
+        
+        return user
+    
 # 로그인 시리얼라이저 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
