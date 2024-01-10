@@ -9,8 +9,6 @@ from django.contrib.auth import authenticate # Django의 기본 authenticate 함
 from django.contrib.auth.hashers import check_password
 from django.utils import timezone # 마지막 로그인 시간 체크를 위함
 
-from allauth.account.utils import send_email_confirmation
-
 import re
 
 from .models import *
@@ -68,7 +66,7 @@ class SignupSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         token = Token.objects.create(user=user)
-        return token.key
+        return user
 
     
 # 로그인 시리얼라이저 

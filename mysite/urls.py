@@ -26,6 +26,7 @@ urlpatterns = [
     path('accounts/', include('dj_rest_auth.urls')),
     path('accounts/', include('allauth.urls')),
     path('board/', include('board.urls')),
+    path('notice/', include('notice.urls')),
     path('rank/', include('rank.urls')),
     path('study/', include('study.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -31,7 +31,7 @@ KAKAO_SECRET_KEY = secrets['KAKAO_SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['aivleteam19literacy.run.goorm.io']
+# ALLOWED_HOSTS = ['aivleteam19literacy.run.goorm.io']
 
 # Application definition
 
@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django_filters',
     "accounts",
     "board",
+    "notice",
     "rank",
     "study",
 ]
