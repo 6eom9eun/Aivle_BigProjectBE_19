@@ -56,7 +56,7 @@ def make_problem(word, meaning):
     llm = ChatOpenAI(
         temperature=0.1,
         #model="ft:gpt-3.5-turbo-0613:personal::8aG6fMiE",
-        #model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn",
+        # model="ft:gpt-3.5-turbo-1106:personal::8aztbxTn",
         model="gpt-3.5-turbo-1106",
         streaming=True,
         callbacks=[StreamingStdOutCallbackHandler()],
@@ -88,6 +88,7 @@ def make_problem(word, meaning):
     
     # 보기 만들기
     content=[]
+    meaning=meaning.replace('.','')     # 마침표 제거
     content.append(meaning)   # 정답 보기 넣기
     
     # 데이터 프레임으로 해당 데이터 가져오기
@@ -107,14 +108,15 @@ def make_problem(word, meaning):
 
     
     # 데이터베이스에서 활용하기
-    for i in range(5):
+    for i in range(10):
         # 무작위로 뜻 불러오기
         random_word_entry = Word.objects.order_by('?').first()
         data_meaning = random_word_entry.meaning
+        data_meaning = data_meaning.replace('.','')  # 마침표 제거
 
         if len(content)==4:
             break
-        elif meaning==data_meaning:
+        elif data_meaning in content:
             continue
         else:
             content.append(data_meaning)
