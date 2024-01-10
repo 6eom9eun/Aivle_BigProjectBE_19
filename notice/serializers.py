@@ -9,11 +9,9 @@ class NoticeSerializer(serializers.ModelSerializer):
 class NoticeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
-        fields = ['id', 'title', 'created_at']
-        ordering = ['-id']
+        fields = ['id', 'title', 'created_at'] 
 
 class NoticeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
         fields = ['title', 'content']
-
