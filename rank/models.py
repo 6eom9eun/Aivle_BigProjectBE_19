@@ -15,6 +15,13 @@ class Ranking(models.Model):
         self.created_dt = timezone.now()
         self.save()
 
+    def save(self, *args, **kwargs):
+            if self.pk is not None:
+                original_ranking = Ranking.objects.get(pk=self.pk)
+                if original_ranking.answers != self.answers:
+                    self.created_dt = timezone.now()
+            super(Ranking, self).save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.user.username} - Level {self.user_level} {self.created_dt}"
     
