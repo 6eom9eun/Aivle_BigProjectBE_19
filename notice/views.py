@@ -11,7 +11,7 @@ class NoticeListView(generics.ListCreateAPIView):
     queryset = Notice.objects.order_by('-id')
     
     def get_serializer_class(self):
-        if self.request.method == 'POST' or self.request.method == 'PUT':
+        if self.request.method == 'POST':
             return NoticeCreateSerializer
         return NoticeListSerializer
     

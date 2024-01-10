@@ -9,7 +9,7 @@ class Ranking(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='ranking') 
     user_level = models.IntegerField(default=1) #단어장 레벨
     answers = models.IntegerField(default=0)  #푼 문제수
-    created_dt=models.DateTimeField(null=True, blank = True)       #수정날짜 표시(등수 같을 경우 순위 판단)
+    created_dt=models.DateTimeField(null=True, blank = True, auto_now_add=True)      #수정날짜 표시(등수 같을 경우 순위 판단)
     
     def publish(self):
         self.created_dt = timezone.now()
