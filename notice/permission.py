@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from rest_framework.exceptions import PermissionDenied
 
 class AdminPermission(permissions.BasePermission):
     message = '관리자만 접근할 수 있습니다.'
