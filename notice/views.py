@@ -1,12 +1,11 @@
 from rest_framework import generics
 from .models import Notice
 from .serializers import NoticeSerializer, NoticeListSerializer, NoticeCreateSerializer
-from rest_framework.authentication import TokenAuthentication
 from .permission import AdminPermission
 from .models import Notice
 
 class NoticeListView(generics.ListCreateAPIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = []
     permission_classes = [AdminPermission]
     queryset = Notice.objects.order_by('-id')
     
@@ -16,7 +15,7 @@ class NoticeListView(generics.ListCreateAPIView):
         return NoticeListSerializer
     
 class NoticeDetailView(generics.RetrieveUpdateDestroyAPIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = []
     permission_classes = [AdminPermission]
     queryset = Notice.objects.all()
     serializer_class = NoticeSerializer
