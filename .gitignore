@@ -1,4 +1,3 @@
-media/uploads/*
 nohup.out
 secrets.json
 *.sqlite3
