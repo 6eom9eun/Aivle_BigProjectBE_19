@@ -12,7 +12,7 @@
 
 - 해당 리포지토리는 BE(Django)임.
 
-# LiQuest
+# <img src="https://github.com/6eom9eun/Aivle_BigProjectBE_19/assets/104510730/e8e1565f-fc57-4ae7-aa37-13d8a1291750"  width="25" height="25"/> LiQuest
 
 - 웹 서비스 LiQuest는 생성형 AI를 활용한 교육 플랫폼으로, 아이들의 문해력 향상을 돕기 위해 다음과 같은 서비스를 제공합니다.
 
