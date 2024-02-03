@@ -21,6 +21,11 @@ class Post(models.Model):
     published_at = models.DateTimeField(null=True, blank=True)
     image = models.ImageField(upload_to='uploads/%Y/%m/%d/', blank=True, null=True)  # 사진 첨부
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+        ]
+        
     def publish(self):
         self.published_at = timezone.now()
         self.save()
@@ -49,6 +54,13 @@ class Comment(models.Model): # 해당 글의 댓글 관리
     comment = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)  # 작성일
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['profile']),
+            models.Index(fields=['reply']),
+        ]
+        
     def __str__(self):
         return self.comment
     

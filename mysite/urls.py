@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from accounts.models import User
 
 urlpatterns = [
+    path("__debug__/", include("debug_toolbar.urls")),
     path("admin/", admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('dj_rest_auth.urls')),

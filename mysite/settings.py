@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.kakao",
     "allauth.socialaccount.providers.naver",
+    "debug_toolbar",
     'corsheaders',
     'django_filters',
     "accounts",
@@ -143,6 +144,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     
 ]
 CORS_ORIGIN_ALLOW_ALL = True
@@ -202,6 +204,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
