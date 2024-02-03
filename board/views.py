@@ -1,13 +1,13 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
 from .permissions import CustomReadOnly, IsOwnerOrReadOnly
 from .models import Post, Comment, Image
 from accounts.models import Profile
@@ -15,7 +15,7 @@ from .serializers import PostSerializer, PostCreateSerializer, PostDetailSeriali
 
 # Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
 class PostViewSet(generics.ListCreateAPIView):
-    queryset = Post.objects.all().order_by('-created_at')
+    queryset = Post.objects.all().order_by('-created_at').select_related('user')
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly, CustomReadOnly]
     filter_backends = [DjangoFilterBackend]
@@ -33,7 +33,9 @@ class PostViewSet(generics.ListCreateAPIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all().order_by('-created_at')
+    queryset = Post.objects.all().order_by('-created_at').select_related('user').prefetch_related(
+        Prefetch('comments', queryset=Comment.objects.select_related('user', 'profile'))
+    )
     serializer_class = PostDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -52,7 +54,7 @@ class CommentViewSet(generics.ListCreateAPIView):
     
     def get_queryset(self):
         post_pk = self.kwargs.get("post_id")
-        return Comment.objects.filter(reply__post_id=post_pk).order_by('-created_at')
+        return Comment.objects.filter(reply__post_id=post_pk).order_by('-created_at').select_related('user', 'profile')
 
     def perform_create(self, serializer):
         try:

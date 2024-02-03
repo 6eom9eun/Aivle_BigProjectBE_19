@@ -14,17 +14,12 @@ import os
 """
 class Post(models.Model):
     post_id = models.AutoField(primary_key=True) # 기본키
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # 외래키
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True) # 외래키
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     published_at = models.DateTimeField(null=True, blank=True)
     image = models.ImageField(upload_to='uploads/%Y/%m/%d/', blank=True, null=True)  # 사진 첨부
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['user']),
-        ]
         
     def publish(self):
         self.published_at = timezone.now()
@@ -47,20 +42,13 @@ class Comment(models.Model): # 해당 글의 댓글 관리
         comment: 댓글내용
         created_at: 작성일
     """
-    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, null=False, blank=False, on_delete=models.CASCADE, db_index=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True, db_index=True)
     comment_id = models.AutoField(primary_key=True) # 기본키
-    reply = models.ForeignKey(Post, related_name='comments', null=False, blank=False, on_delete=models.CASCADE)
+    reply = models.ForeignKey(Post, related_name='comments', null=False, blank=False, on_delete=models.CASCADE, db_index=True)
     comment = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)  # 작성일
     
-    class Meta:
-        indexes = [
-            models.Index(fields=['user']),
-            models.Index(fields=['profile']),
-            models.Index(fields=['reply']),
-        ]
-        
     def __str__(self):
         return self.comment
     

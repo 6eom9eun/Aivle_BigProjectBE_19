@@ -19,15 +19,6 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['post_id', 'user_id', 'username', 'title', 'created_at', 'image']
-
-    def to_representation(self, instance): # 코드 최적화
-        representation = super().to_representation(instance)
-        post_with_related_user = Post.objects.select_related('user').get(pk=instance.pk)
-
-        representation['user_id'] = post_with_related_user.user.id
-        representation['username'] = post_with_related_user.user.username
-
-        return representation
     
 class PostDetailSerializer(serializers.ModelSerializer):
     user_id = serializers.ReadOnlyField(source='user.id')
