@@ -13,7 +13,7 @@ from .models import Post, Comment, Image
 from accounts.models import Profile
 from .serializers import PostSerializer, PostCreateSerializer, PostDetailSerializer, CommentSerializer
 
-# Post의 목록, detail 보여주기, 수정하기, 삭제하기 모두 가능
+# Post 목록 조회/생성 뷰
 class PostViewSet(generics.ListCreateAPIView):
     queryset = Post.objects.all().order_by('-created_at').select_related('user')
     authentication_classes = [TokenAuthentication]
@@ -31,7 +31,8 @@ class PostViewSet(generics.ListCreateAPIView):
             serializer.save(user=self.request.user)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+        
+# Post 조회/수정/삭제 뷰
 class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all().order_by('-created_at').select_related('user').prefetch_related(
         Prefetch('comments', queryset=Comment.objects.select_related('user', 'profile'))
@@ -45,7 +46,7 @@ class PostDetailViewSet(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
         
-# (댓글) Comment 목록 보여주기
+# Comment 목록 조회/생성 뷰
 class CommentViewSet(generics.ListCreateAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -66,7 +67,7 @@ class CommentViewSet(generics.ListCreateAPIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-# (댓글) Comment 조회, 수정, 삭제     
+# Comment 목록 조회/수정/삭제 뷰
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]

@@ -4,6 +4,7 @@ from .serializers import NoticeSerializer, NoticeListSerializer, NoticeCreateSer
 from .permission import AdminPermission
 from .models import Notice
 
+# Notice 목록 조회/생성 뷰
 class NoticeListView(generics.ListCreateAPIView):
     authentication_classes = []
     permission_classes = [AdminPermission]
@@ -13,7 +14,8 @@ class NoticeListView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return NoticeCreateSerializer
         return NoticeListSerializer
-    
+
+# Notice 조회/수정/삭제 뷰
 class NoticeDetailView(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = []
     permission_classes = [AdminPermission]
