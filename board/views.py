@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Prefetch
+from django.views.decorators.cache import cache_page
+
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,6 +28,10 @@ class PostViewSet(generics.ListCreateAPIView):
             return PostCreateSerializer
         return PostSerializer
 
+    @cache_page(60 * 15)  # 15분 동안 캐시
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
     def perform_create(self, serializer):
         try:
             serializer.save(user=self.request.user)
@@ -57,6 +63,10 @@ class CommentViewSet(generics.ListCreateAPIView):
         post_pk = self.kwargs.get("post_id")
         return Comment.objects.filter(reply__post_id=post_pk).order_by('-created_at').select_related('user', 'profile')
 
+    @cache_page(60 * 15)  # 15분 동안 캐시
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
     def perform_create(self, serializer):
         try:
             post_pk = self.kwargs.get("post_id")
